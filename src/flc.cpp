@@ -215,6 +215,12 @@ double sr::recruits(int istock, double ssb, int iyr, int iunit, int iseason, int
       case FLRConst_Shepherd:
          returnval = param(istock,1,_yr,iunit,iseason,iarea,iter) * ssb/pow(param(istock,2,_yr,iunit,iseason,iarea,iter) + ssb,param(istock,3,_yr,iunit,iseason,iarea,iter));
       break;
+      
+      case FLRConst_Taylor:
+         returnval = ssb * exp( -param(istock,1,_yr,iunit,iseason,iarea,iter)+
+                                (param(istock,1,_yr,iunit,iseason,iarea,iter)-param(istock,2,_yr,iunit,iseason,iarea,iter)*
+                                (1-pow(ssb/param(istock,3,_yr,iunit,iseason,iarea,iter),param(istock,4,_yr,iunit,iseason,iarea,iter)))));
+      break;
         
       case FLRConst_SegReg:
 		  returnval = (ssb <= param(istock,2,_yr,iunit,iseason,iarea,iter) ?  ssb*param(istock,1,_yr,iunit,iseason,iarea,iter) : param(istock,1,_yr,iunit,iseason,iarea,iter)*param(istock,2,_yr,iunit,iseason,iarea,iter));
