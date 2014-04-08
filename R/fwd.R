@@ -138,7 +138,7 @@ setMethod("fwd", signature(object="FLStock",ctrl="fwdControl"),
 #     return(res)})
 
 setMethod("fwd", signature(object="FLStock", ctrl="missing"),
-    function(object, ctrl,
+ fn=   function(object, ctrl,
                sr =NULL, sr.residuals=FLQuant(1,dimnames=dimnames(rec(object))), sr.residuals.mult=TRUE,
                availability=NULL,maxF=2.0,...)
     {
