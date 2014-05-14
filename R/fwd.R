@@ -19,7 +19,7 @@ setMethod("fwd", signature(object="FLStock",ctrl="fwdControl"),
     ## make sure slots have correct iters 
     if (is(sr,"FLSR")) nDim=dims(params(sr))$iter  else nDim=1
     if (!is.null(sr.residuals)) nDim=max(nDim, dims(sr.residuals)$iter, na.rm=TRUE)  
-    if (nDim>1) m(object)=propagate(m(object),nDim)
+    if (nDim>1 & dim(m(object))[6]==1) m(object)=propagate(m(object),nDim)
 
     object<-CheckNor1(object)
 
@@ -138,7 +138,7 @@ setMethod("fwd", signature(object="FLStock",ctrl="fwdControl"),
 #     return(res)})
 
 setMethod("fwd", signature(object="FLStock", ctrl="missing"),
- fn=   function(object, ctrl,
+   function(object, ctrl,
                sr =NULL, sr.residuals=FLQuant(1,dimnames=dimnames(rec(object))), sr.residuals.mult=TRUE,
                availability=NULL,maxF=2.0,...)
     {
@@ -162,7 +162,7 @@ setMethod("fwd", signature(object="FLStock", ctrl="missing"),
     nits=max(length(dmns$iter),  length(dimnames(sr.residuals)$iter))   
          
     if (nits>1 & dims(object)$iter==1){
-       stock.n(object)=propagate(stock.n(object),nits)
+       if(dim(stock.n(object))[6]==1) stock.n(object)=propagate(stock.n(object),nits)
        if (length(dimnames(sr.residuals)$iter)==1)
          sr.residuals=propagate(sr.residuals,nits)
        }
