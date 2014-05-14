@@ -410,4 +410,3 @@ setMethod("fwd", signature(object="FLStock", ctrl="FLQuant"),
 # #
 # #   invisible(res)
 # #   })
-# #
