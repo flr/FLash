@@ -72,9 +72,9 @@ int get_sr(FLRConstSRR i)
       case FLRConst_BevHolt:  return 2;
       case FLRConst_Ricker:   return 3;
       case FLRConst_SegReg:   return 4;
-      case FLRConst_Cushing:  return 5;
-      case FLRConst_Shepherd: return 6;
-      }
+      case FLRConst_Shepherd: return 5;
+      case FLRConst_Cushing:  return 6;
+     }
 
    return 1;
    }
