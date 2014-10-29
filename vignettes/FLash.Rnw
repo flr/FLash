@@ -1,4 +1,0 @@
-%\VignetteIndexEntry{FLash}
-\documentclass{article}
-\begin{document}
-\end{document}
