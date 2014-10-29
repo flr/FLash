@@ -5,6 +5,11 @@ date: "August 13th, 2014"
 output: rmarkdown::tufte_handout
 ---
 
+<!--
+%% \VignetteEngine{knitr::knitr}
+-->
+
+
 # Introduction
 \newthought{The precautionary approach}[^books_be] requires harvest control rules (HCRs) to trigger pre-agreed conservation and management action. This requires limit reference points to set boundaries that constrain harvesting within safe biological limits within which stocks can produce the maximum sustainable yield (MSY) and targets to ensure that management objectives are met. 
 
