@@ -12,8 +12,11 @@ if (!isGeneric("fwd"))
 
 setMethod("fwd", signature(object="FLStock",ctrl="fwdControl"),
 	function(object, ctrl,
-   sr =NULL, sr.residuals=FLQuant(1,dimnames=dimnames(rec(object))), sr.residuals.mult=TRUE,
-               availability=NULL,maxF=2.0)
+           sr          =NULL, 
+           sr.residuals=FLQuant(1,dimnames=dimnames(rec(object))), 
+           sr.residuals.mult=TRUE,
+           availability=NULL,
+           maxF=2.0)
     {      
     if (is(sr,"FLBRP")) sr=list(params=params(sr),model=SRModelName(model(sr)))
     ## make sure slots have correct iters 
