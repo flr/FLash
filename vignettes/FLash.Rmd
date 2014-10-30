@@ -59,6 +59,11 @@ eql=brp(eql)
 plot(eql)
 ```
 
+```{r,echo=FALSE}
+stk=ple4
+save(stk,eql,sr,file="/tmp/flash.RData")
+```
+
 Expected parameters in the future
 ```{r}
 ggplot(FLQuants(eql,"m","mat","stock.wt","catch.sel"))+
@@ -174,6 +179,28 @@ plot(stk)
 ```
 
 Other quantities can be considered in projections as well as catch and F, i.e. ssb, biomass,  landings, discards, f, f.catch, f.landings, f.discards, effort, costs, revenue, profit, mnsz.
+
+
+```{r1}
+f.landings=function(x) apply((harvest(x)*
+                   landings.n(x)/
+                   catch.n(x))[ac( range(stk)["minfbar"]:range(stk)["maxfbar"])],2,mean)
+f.discards=function(x) apply((harvest(x)*
+                   landings.n(x)/
+                   catch.n(x))[ac( range(stk)["minfbar"]:range(stk)["maxfbar"])],2,mean)
+mnsz     =function(x) apply(stock.n(x)*stock.wt(x),2,sum)/
+                       apply(stock.n(x),2,sum)
+                  
+flqs=FLQuants(stk,"ssb", "biomass"=stock,  
+                  "landings", "discards", "fbar",
+                  "f.landings", "f.discards","mnsz")
+         
+#             effort, costs, revenue, profit, .
+
+ggplot(flqs)+
+  geom_line(aes(year,data))+
+  facet_grid(qname~.,scale="free_y")
+```
 
 Management has two main options, i.e. setting effort (as in the examples above) or relative F-at-age by changing the selection pattern.
 The selection pattern-at-age of landings is that of the catch less discards e.g.
@@ -296,109 +323,49 @@ ssb( stk)[,c("2009","2010")]
 ```
 
 
-```{r}
-albF1     =fwd(stk,ctrl=target,sr=sr)
-plot(albF1)
-```
+# Harvest Control Rules
+```{rhcr-fc}
+msy  =refpts(eql)["msy", "yield"]
+bmsy =refpts(eql)["msy", "ssb"]
+f0.1 =refpts(eql)["f0.1","harvest"]
+stk  =fwdWindow(stk,end=2020,eql)
 
-
-```{r}
-ctrl      =fwdControl(data.frame(year    =2009:2020,
-                                 val     =c(refpts(eql)["f0.1","harvest"])*0.5,
-                                 quantity="f"))
-stk=fwdWindow(ple4,end=2020,eql)
-albF2     =fwd(stk, ctrl=ctrl, sr=sr)
-```
-
-
-```{r}
-ctrl     =fwdControl(data.frame(year    =2009:2020,
-                                val     =c(refpts(eql)["f0.1","harvest"])*2.0,
-                                quantity="f"))
-albF3     =fwd(stk, ctrl=ctrl, sr=sr)
-```
-
-
-```{r,eval=FALSE}
-## Create an FlStock object
-albF0.1=FLStocks("F0.1"=albF1,"half"=albF2,"double"=albF3)
-plot(albF0.1)
-
-## Cut the plots
-plot(lapply(albF0.1,window,start=1990))
-
-## Compare alternatives
-lapply(lapply(albF0.1,window,start=2009),computeCatch)
-
-#### Total catch
-lapply(lapply(lapply(albF0.1,window,start=2009),computeCatch),sum)
-
-#### Short-term
-unlist(lapply(lapply(lapply(albF0.1,window,start=2009,end=2014),computeCatch),sum))
-
-#### Medium-term
-unlist(lapply(lapply(lapply(albF0.1,window,start=2017,end=2021),computeCatch),sum))
-
-#### Long-term
-unlist(lapply(lapply(lapply(albF0.1,window,start=2024,end=2028),computeCatch),sum))
-```
-
-
-```{r1,eval=FALSE}
-#### constant catch startegies
-ctch=mean(computeCatch(albNEA)[,ac(2004:2008)])
-
-albC=FLStocks()
-ctrl=fwdControl(data.frame(year=2009:2028,val=ctch,quantity="catch"))
-albC[["1.0"]]     =fwd(stk,ctrl=ctrl,sr=sr)
-
-ctrl     =fwdControl(data.frame(year=2009:2028,val=0.5*ctch,quantity="catch"))
-albC[["0.5"]]     =fwd(stk,ctrl=ctrl,sr=sr)
-
-ctrl     =fwdControl(data.frame(year=2009:2028,val=1.5*ctch,quantity="catch"))
-albC[["1.5"]]     =fwd(stk,ctrl=ctrl,sr=sr)
-plot(albC)
-
-#### compare strategies
-plot(FLStocks(albC[[1]],albF0.1[[1]]))
-```
-
-
-```{r2,eval=FALSE}
 #### constant catch with an upper F bound
-ctrl=fwdControl(data.frame(year    =rep(2009:2028,each=20),
-                            val     =rep(c(ctch*1.5,NA),20),
-  		      max     =rep(c(NA,F0.1),20),
-                            quantity=rep(c("catch","f"),20)))
-albFC=fwd(stk,ctrl=ctrl,sr=sr)
+ctrl=fwdControl(data.frame(year    =rep(2009:2020,each=2),
+                           val     =rep(c(msy*0.7,NA),12),
+  	                 	     max     =rep(c(NA,f0.1),12),
+                           quantity=rep(c("catch","f"),12)))
+stk=fwd(stk,ctrl=ctrl,sr=sr)
+
+plot(stk[,ac(2005:2020)])
+```
+
+Reduce F to F0.1 but only let catch change by 15% a year
+```{rhcr-F-TACconstraint}
+ctrl=fwdControl(data.frame(year    =rep(2009:2020,each=2),
+                           rel.year=c(t(array(c(rep(NA,12),2008:2019),c(12,2)))),
+                           val     =rep(c(f0.1,NA),12),
+                           min     =rep(c(NA,0.85),12),
+                           quantity=rep(c("f","catch"),12)))
+stk=fwd(stk,ctrl=ctrl,sr=sr)
+
+plot(stk[,ac(2005:2020)])
+```
+
+10% SSB increase 
+```{rhcr-10ssb}
+ctrl=fwdControl(data.frame(year    =rep(2009:2020,each=2),
+                           rel.year=c(t(array(c(2008:2019,rep(NA,12)),c(12,2)))),
+                           max     =rep(c(f0.1,NA),12),
+                           val     =rep(c(NA,1.1),12),
+                           quantity=rep(c("ssb","f"),12)))
+stk=fwd(stk,ctrl=ctrl,sr=sr)
+
+plot(stk[,ac(2005:2019)])
 ```
 
 
-```{r3,eval=FALSE}
-#### 5% F reduction
-ctrl=fwdControl(data.frame(year    =rep(2009:2028,each=2),
-                            rel.year=c(t(array(c(2008:2027,rep(NA,20)),c(20,2)))),
-                            val     =rep(c(0.95,NA),20),
-                            min     =rep(c(NA,F0.1*.5),20),
-                            quantity=rep(c("catch","f"),20)))
-albFC=fwd(stk,ctrl=ctrl,sr=sr)
-plot(albFC)
-```
-
-
-```{r4,eval=FALSE}
-#### 10% SSB increase 
-ctrl=fwdControl(data.frame(year    =2009:2028,
-                            rel.year=2008:2027,
-                            min     =1.10,
-                            quantity="ssb"))
-albSSB=fwd(stk,ctrl=ctrl,sr=sr)
-plot(albSSB)
-```
-
-
-
-```{r5,eval=FALSE}
+```{rhcr-func}
 hcrF=function(iYr,SSB,Bpa,Blim,Fmin,Fmax){
     val =pmin(Fmax,Fmax-(Fmax-Fmin)*(Bpa-SSB)/(Bpa-Blim))
     trgt=fwdTarget(year=iYr+1,quantity="f",valueval)
@@ -407,81 +374,77 @@ hcrF=function(iYr,SSB,Bpa,Blim,Fmin,Fmax){
 ```
 
 
-```{r6,eval=FALSE}
-data(ple4)
+Recover stock to target SSB level corresponding to the 1980s in 2020 with a constant F strategy
+```{r6}
+load("/tmp/flash.RData")
+stk=fwdWindow(stk,end=2020,eql)
 
-# Set up the stock for the next 6 years
-pleProj =stf(ple4,6)
-
-# Set a constant recruitment based on the geometric mean of last 10 years
-mnRec = FLPar(exp(mean(log(rec(ple4)[,ac(1992:2001)]))))
-# Set ssb target to level 19 years ago
-ssbTarget = ssb(ple4)[,"1992"]
+ssbTarget = mean(ssb(stk)[,ac(1970:1989)])
 
 ## function to minimise
-f = function(x,stk,ssbTarget,ctrl,sr)
-       {
-       ctrl@target[,"val"]    =x
+f<-function(x,stk,ssbTarget,ctrl,sr){
+  
+       # set target F for all years
+       ctrl@target[,   "val"] =x
        ctrl@trgtArray[,"val",]=x
 
-       ssb.=c(ssb(fwd(stk,ctrl=ctrl,sr=sr))[,"2006"])
+       # project
+       stk=fwd(stk,ctrl=ctrl,sr=sr)
+       
+       # Squared Difference
+       return((ssb(stk)[,ac(range(stk)["maxyear"])]-ssbTarget)^2)}
 
-       return((ssb.-ssbTarget)^2)
-       }
+## control object
+ctrl=fwdControl(data.frame(year=2009:2020,val=.5,rel=2008,quantity="f"))
 
-## Recover stock to BMY in 2006 with a constant F strategy
-ctrl=fwdControl(data.frame(year=2002:2006,val=.5,rel=2001,quantity="f"))
+xmin=optimize(f, c(0.1, 1.0), tol = 0.0000001, stk=stk, ssbTarget=ssbTarget, 
+              ctrl=ctrl, sr=eql)
+ctrl=fwdControl(data.frame(year=2009:2020,val=xmin$minimum,rel=2008,quantity="f"))
 
-xmin=optimize(f, c(0.1, 1.0), tol = 0.0000001, stk=pleProj, ssbTarget=ssbTarget, ctrl=ctrl, sr=list(model="mean",params=mnRec))
-ctrl=fwdControl(data.frame(year=2002:2006,val=xmin$minimum,rel=2001,quantity="f"))
-pleProjF     =fwd(pleProj,ctrl=ctrl,sr=list(model="mean", params=mnRec))
+stk     =fwd(stk,ctrl=ctrl,sr=eql)
 
 # update catch slot
-catch(pleProjF) = computeCatch(pleProjF)
+catch(stk) = computeCatch(stk)
 
 # Have we reached the target?
 ssbTarget
-ssb(pleProjF)[,ac(2002:2006)]
+ssb(stk)
 # At what level of constant F
-fbar(pleProjF)[,ac(2002:2006)]
-# 'ave a butchers
-plot(pleProjF[,ac(1957:2006)])
+fbar(stk)
 
-plot(albSSB)
+plot(stk)+
+  geom_hline(aes())
 ```
 
+Recover stock to the desired SSB in 2006 with a constant Catch strategy
+Here val can be anything in the ctrl because it is overwritten in the optimisation loop
 
 ```{r7,eval=FALSE}
+ctrl=fwdControl(data.frame(year=2009:2020,val=c(catch(stk)[,"2001"]),quantity="catch"))
 
-data(ple4)
-pleProj=stf(ple4,6)
-
-## Recover stock to the desired SSB in 2006 with a constant Catch strategy
-# Here val can be anything in the ctrl because it is overwritten in the optimisation loop
-ctrl=fwdControl(data.frame(year=2002:2006,val=c(catch(pleProj)[,"2001"]),quantity="catch"))
-
-xmin=optimize(f, c(100, 100000), tol = 0.0000001, stk=pleProj, ssbTarget=ssbTarget, ctrl=ctrl, sr=list(model="mean",params=mnRec))
-ctrl=fwdControl(data.frame(year=2002:2006,val=xmin$minimum,quantity="catch"))
-pleProjC      =fwd(pleProj,ctrl=ctrl,sr=list(model="mean", params=mnRec))
+xmin=optimize(f, c(100, 100000), tol = 0.0000001, stk=stk, 
+              ssbTarget=ssbTarget, ctrl=ctrl, sr=sr)
+ctrl=fwdControl(data.frame(year=2009:2020,val=xmin$minimum,quantity="catch"))
+stkC      =fwd(stk,ctrl=ctrl,sr=sr)
 
 # Have we reached the target?
 ssbTarget
-ssb(pleProjC)[,ac(2002:2006)]
+ssb(stkC)[,ac(2002:2020)]
 # At what level of constant catch
-computeCatch(pleProjC)[,ac(2002:2006)]
+computeCatch(stkC)[,ac(2002:2020)]
 # And at what level of F
-fbar(pleProjC)[,ac(2002:2006)]
+fbar(stkC)[,ac(2002:2006)]
 # Update the catch slot
-catch(pleProjC) = computeCatch(pleProjC)
+catch(stkC) = computeCatch(stkC)
 # 'ave a butchers
-plot(pleProjC[,ac(1957:2006)])
+plot(stkC[,ac(1957:2006)])
 ```
 
 
 ```{r8,eval=FALSE}
 # Assessment up to and including 2001
 data(ple4)
-black.bird               =stf(pleProj,nyrs=2)
+black.bird               =stf(stk,nyrs=2)
 
 # set courtship and egg laying in Autumn
 black.bird@m.spwn[]      =0.66
@@ -547,7 +510,7 @@ catch(  albM)=computeCatch(  albM,"all")
 
 plot(FLStocks(albM,stk28))
  
-ctrl=fwdControl(data.frame(year=2009:2028,val=ctch,quantity="catch"))
+ctrl=fwdControl(data.frame(year=2009:2020,val=ctch,quantity="catch"))
 albM     =fwd(albM,ctrl=ctrl,sr=sr)
 
 plot(albM)
@@ -563,7 +526,7 @@ catch(  albM1)=computeCatch(  albM1,"all")
 albM1         =fwd(albM1,ctrl=ctrl,sr=sr)
 
 albM2   =albM
-m(albM2)[,ac(2000:2028)]=m(albM)[,ac(2000:2028)]*2
+m(albM2)[,ac(2000:2020)]=m(albM)[,ac(2000:2020)]*2
 
 harvest(albM2)=computeHarvest(albM2)
 catch(  albM2)=computeCatch(  albM2,"all")
@@ -574,7 +537,7 @@ plot(FLStocks(albM,albM1,albM2))
 
 ```{r11,eval=FALSE}
 #### process error in recruitment
-srDev=FLQuant(rlnorm(20*100,0.0,0.3),dimnames=list(year=2008:2028,iter=1:100))
+srDev=FLQuant(rlnorm(20*100,0.0,0.3),dimnames=list(year=2008:2020,iter=1:100))
 sr=fwd(albM,ctrl=ctrl,sr=sr,sr.residuals=srDev)
 plot(sr)
 ```
@@ -821,7 +784,7 @@ plot(refIPrice)
 data(ple4)
 
 # Set up the stock for the next 6 years
-pleProj =stf(ple4,6)
+stk =stf(ple4,6)
 
 # Set a constant recruitment based on the geometric mean of last 10 years
 mnRec = FLPar(exp(mean(log(rec(ple4)[,ac(1992:2001)]))))
@@ -842,54 +805,54 @@ f = function(x,stk,ssbTarget,ctrl,sr)
 ## Recover stock to BMY in 2006 with a constant F strategy
 ctrl=fwdControl(data.frame(year=2002:2006,val=.5,rel=2001,quantity="f"))
 
-xmin=optimize(f, c(0.1, 1.0), tol = 0.0000001, stk=pleProj, ssbTarget=ssbTarget, ctrl=ctrl, sr=list(model="mean",params=mnRec))
+xmin=optimize(f, c(0.1, 1.0), tol = 0.0000001, stk=stk, ssbTarget=ssbTarget, ctrl=ctrl, sr=list(model="mean",params=mnRec))
 ctrl=fwdControl(data.frame(year=2002:2006,val=xmin$minimum,rel=2001,quantity="f"))
-pleProjF     =fwd(pleProj,ctrl=ctrl,sr=list(model="mean", params=mnRec))
+stkF     =fwd(stk,ctrl=ctrl,sr=list(model="mean", params=mnRec))
 
 # update catch slot
-catch(pleProjF) = computeCatch(pleProjF)
+catch(stkF) = computeCatch(stkF)
 
 # Have we reached the target?
 ssbTarget
-ssb(pleProjF)[,ac(2002:2006)]
+ssb(stkF)[,ac(2002:2006)]
 # At what level of constant F
-fbar(pleProjF)[,ac(2002:2006)]
+fbar(stkF)[,ac(2002:2006)]
 # 'ave a butchers
-plot(pleProjF[,ac(1957:2006)])
+plot(stkF[,ac(1957:2006)])
 
 plot(albSSB)
 ```
 
 ```{r24,eval=FALSE}
 data(ple4)
-pleProj=stf(ple4,6)
+stk=stf(ple4,6)
 
 ## Recover stock to the desired SSB in 2006 with a constant Catch strategy
 # Here val can be anything in the ctrl because it is overwritten in the optimisation loop
-ctrl=fwdControl(data.frame(year=2002:2006,val=c(catch(pleProj)[,"2001"]),quantity="catch"))
+ctrl=fwdControl(data.frame(year=2002:2006,val=c(catch(stk)[,"2001"]),quantity="catch"))
 
-xmin=optimize(f, c(100, 100000), tol = 0.0000001, stk=pleProj, ssbTarget=ssbTarget, ctrl=ctrl, sr=list(model="mean",params=mnRec))
+xmin=optimize(f, c(100, 100000), tol = 0.0000001, stk=stk, ssbTarget=ssbTarget, ctrl=ctrl, sr=list(model="mean",params=mnRec))
 ctrl=fwdControl(data.frame(year=2002:2006,val=xmin$minimum,quantity="catch"))
-pleProjC      =fwd(pleProj,ctrl=ctrl,sr=list(model="mean", params=mnRec))
+stkC      =fwd(stk,ctrl=ctrl,sr=list(model="mean", params=mnRec))
 
 # Have we reached the target?
 ssbTarget
-ssb(pleProjC)[,ac(2002:2006)]
+ssb(stkC)[,ac(2002:2006)]
 # At what level of constant catch
-computeCatch(pleProjC)[,ac(2002:2006)]
+computeCatch(stkC)[,ac(2002:2006)]
 # And at what level of F
-fbar(pleProjC)[,ac(2002:2006)]
+fbar(stkC)[,ac(2002:2006)]
 # Update the catch slot
-catch(pleProjC) = computeCatch(pleProjC)
+catch(stkC) = computeCatch(stkC)
 
-plot(pleProjC[,ac(1957:2006)])
+plot(stkC[,ac(1957:2006)])
 ```
 
 
 ```{r25,eval=FALSE}
 # Assessment upto and including 2001
 data(ple4)
-black.bird               =stf(pleProj,nyear=2)
+black.bird               =stf(stk,nyear=2)
 
 # set courtship and egg laying in Autumn
 black.bird@m.spwn[]      =0.66
