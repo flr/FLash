@@ -9,7 +9,9 @@ exportMethods(
   "fwdControl",
   "+",
   "show",
-  "setSR")
+  "setSR",
+  "hcr",
+  "tac")
 export(
   "CheckNor1",
   "flqCon",

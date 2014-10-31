@@ -8,9 +8,7 @@
 
 # Will eventually be expanded so that the multiple SRs can be returned.  For the moment s a single SR is returned
 
-if(!isGeneric('setSR'))
-    setGeneric('setSR', function(sr, ...) standardGeneric('setSR'))
-
+setGeneric('setSR', function(sr, ...) standardGeneric('setSR'))
 setMethod('setSR', signature(sr='FLSR'),
     function(sr,object,yrs,sr.residuals=NULL,sr.residuals.mult=TRUE,availability=NULL) {
 
