@@ -6,7 +6,7 @@ output: rmarkdown::tufte_handout
 ---
 
 <!--
-%% \VignetteEngine{knitr::knitr,fig.cap=""}
+%% \VignetteEngine{knitr::knitr}
 -->
 
 ```{r knitr_init, echo=FALSE, results="asis"}
