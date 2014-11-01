@@ -1,6 +1,5 @@
 utils::globalVariables('laply')
 
-
 #' tac , 
 #' 
 #' Calculates the Total Allowable Catch for a \code{biodyn} object and target harvest rate
@@ -135,10 +134,10 @@ setMethod('hcr', signature(object='FLStock',refs='FLPar'),
            hcrYrs=max(as.numeric(dimnames(ssb(  object))$year)),
            tac   =FALSE,
            tacMn =TRUE,
-           bndF  =NULL, #c(1,Inf),
-           bndTac=NULL, #c(1,Inf),
-           iaF   =TRUE, 
-           iaTac =TRUE, 
+           bndF  =NULL, #c(1,Inf), #not needed as fmin and maxF sort this
+           bndTac=NULL, #c(1,Inf), #absolute
+           iaF   =TRUE,            #relative
+           iaTac =TRUE,            #relative
            maxF  =2,
            ...) {
   ## HCR

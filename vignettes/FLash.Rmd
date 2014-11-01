@@ -6,32 +6,55 @@ output: rmarkdown::tufte_handout
 ---
 
 <!--
-%% \VignetteEngine{knitr::knitr}
+%% \VignetteEngine{knitr::knitr,fig.cap=""}
 -->
 
+```{r knitr_init, echo=FALSE, results="asis"}
+library(knitr)
+
+## Global options
+opts_chunk$set(echo  =TRUE,
+               eval  =TRUE,
+               cache =FALSE,
+               cache.path="cache/",
+               prompt=FALSE,
+               comment=NA,
+               message=FALSE,
+               tidy   =FALSE,
+               warning=FALSE)
+```
 
 # Introduction
+
+An important part of stock assessment is advig  setting future management regulations, e.g. based on catches, effort or selectivity. Therefore often a stock or population (i.e. a projection) hmay be required after an assessment for a range of catches to allow managers to decide upon a TAC or within an MSE for a management measure set by an MP.
+
+
 \newthought{The precautionary approach}[^books_be] requires harvest control rules (HCRs) to trigger pre-agreed conservation and management action. This requires limit reference points to set boundaries that constrain harvesting within safe biological limits within which stocks can produce the maximum sustainable yield (MSY) and targets to ensure that management objectives are met. 
+
 
 The performance of HCRs, i.e. how well they meet management objectives should be evaluated, ideally using Management Strategy Evaluation (MSE) where the HCRs is tested as part of a Management Procedure (MP). Where an MP is the combination of the data collection regime stock assessment procedure and the setting of managment regulations. HCRs can be modelled using the fwd method of FLR; see the MSE document for examples of simulation testing.
 
-Simulating the evolution of a stock or population (i.e. a projection) may be required after an assessment for a range of catches to allow managers to decide upon a TAC or within an MSE for a management measure set by an MP.
+
 
 fwd takes objects descibing historical stock status and assumptions about future dynamics(e.g. growth, maturity, natural mortality and recruitment dynamics), then performs a projection for future options e.g. for catches, fishing mortality. 
 
 
-## Libraries
+# Libraries
 
-```{r}
+```{r,echo=TRUE,eval=TRUE,message=FALSE,warning=FALSE}
 library(FLCore)
 library(FLash)
 library(FLBRP)
 library(ggplotFL)
 ```
 
+```{r,echo=FALSE}
+theme_set(theme_bw(6))
+```
+
 In the following examples we use the ple4 FLSock object
 
-```{r}
+```{r,fig.cap=""}
 data(ple4)
 ```
 
@@ -41,25 +64,33 @@ The main method is fwd which is used to make future projections, e.g. to evaluat
 fwdWindow sets up future dynamics of the FLStock object and fwdControl that sets up the target options in the projections. fwdControl is very flexible but can be tricky to set up so there are a variety of methods for standard tasks, e.g. simulating a Harvest Control Rule (HCR) or running projections for F, catch and biomass target.
 
 # fwdWindow
-To perform a projection requires assumptions about future processes such as growth and recruitment and the effect of management on selectivity.
+To perform a projection requires making assumptions about future processes such as growth and recruitment and any management effects on selectivity.
+This requires extending an FLStock object using fwdWindow and an FLBRP object. In this way projections and equilibrium dynamics and reference points are consistent.
 
-Recruit is based on a stock recruitment relationship, which can be fitted to the historic time series
+```{r,eval=FALSE}
+stk=fwdWindow(ple4,end=2020,eql)
+```
 
-```{r}
-#### SRR
+If recruitment is based on a stock recruitment relationship, this can be obtained by fitting to the historic time series.
+
+```{r,fig.cap=""}
 sr   =as.FLSR(ple4,model="bevholt")
 sr   =fmle(sr,control=list(silent=TRUE))
 ```
 
-While future growth and selectivity is often assummed to be an average of recent values. In which case these can be estimated using FLBRP. An advantage of using FLBRP is then the projections and reference points will be consistent.
-
-```{r}
-#### BRPs
+Then used to estimate the expected equilibrium dynamics
+```{r,fig.cap="Equilibrium Dynamics",fig.height=4}
 eql=FLBRP(ple4,sr=sr)
-computeRefpts(eql)
 eql=brp(eql)
 
-plot(eql)
+plot(eql)+theme(legend.position="bottom")
+```
+
+Future stock parameters
+```{r,fig.cap="Stock Parameters in future projection"}
+ggplot(FLQuants(eql,"m","mat","stock.wt","catch.sel"))+
+  geom_line(aes(age,data))+
+  facet_wrap(~qname,scale="free_y")
 ```
 
 ```{r,echo=FALSE}
@@ -67,40 +98,30 @@ stk=ple4
 save(stk,eql,sr,file="/tmp/flash.RData")
 ```
 
-Future stock parameters
-```{r}
-ggplot(FLQuants(eql,"m","mat","stock.wt","catch.sel"))+
-  geom_line(aes(age,data))+
-  facet_wrap(~qname,scale="free_y")
-```
-
-Setting up the projection years is then be done by  extending an FLStock using fwdWindow by passing an FLBRP object. In this way projections and equilibrium dynamics and reference points are consistent.
-
-```{r}
-stk=fwdWindow(ple4,end=2020,eql)
-unlist(dims(stk))
-```
-
 # Projecting
+
+```{r,echo=FALSE}
+stk=fwdWindow(ple4,end=2020,eql)
+```
 
 We first show how simple projections (e.g. for F and catch) can be performed. Later we show how a variety of HCRs can be simulated.
 
 Simulate fishing at $F_{0.1}$, first create an FLQuant with the target Fs
 
 ```{r}
-F0.1=FLQuant(refpts(eql)["f0.1","harvest",drop=T],dimnames=list(year=2009:2020))
+F0.1=FLQuant(refpts(eql)["f0.1","harvest",drop=T],
+             dimnames=list(year=2009:2020))
 ```
 
 Then project forward, note that sr is also required and that recruitment is determininistic.
-```{r}
+```{r,fig.cap="Projection for $F_{0.1}$"}
 stk=fwd(stk,f=F0.1,sr=sr)
 
 plot(FLStocks("Historic"=ple4,"F0.1"=stk))
 ```
 
-
 It is possible to project for different Fs i.e. alternative reference points
-```{r}
+```{r,fig.cap="Comparision of projections for different F reference points"}
 library(plyr)
 
 dimnames(refpts(eql))$refpt
@@ -120,7 +141,7 @@ plot(stks)
 ```
 
 or different multipliers of $F_{MSY}$
-```{r}
+```{r,fig.cap="Comparison of projections for different Fs"}
 msyTargets=FLQuants(mlply(seq(0,2,.25),
                        function(x) 
                            FLQuant(x*refs["msy"],dimnames=list(year=2009:2020))))
@@ -133,7 +154,7 @@ plot(stks)
 ```
 
 Catch projections are done in a similar way e.g. for $MSY$
-```{r}
+```{r,fig.cap="Comparioson of catch Projections"}
 refpts(eql)["msy"]
 
 refpts(eql)["msy",c("harvest","yield")]
@@ -146,7 +167,7 @@ plot(stks)
 ```
 
 Compare F and Catch projections, e.g. for $MSY$ and $F_{MSY}$
-```{r}
+```{r,fig.cap="Comparison of Catch and F projections"}
 msys=FLQuants("f"    =targetF[[2]],
               "catch"=msy)
 stks=fwd(stk,msys,sr=sr)
@@ -155,7 +176,7 @@ plot(stks)
 ```
 
 If the projected catch is high you could simulate high Fs, however, there will be a cap of effort and capacity so in practice such high Fs may not be realised. Therefore there is a constraint on F.
-```{r}
+```{r,fig.cap=""}
 catch=FLQuant(c(refpts(eql)["msy","yield"])*2,
                           dimnames=list(year=2009:2020))
 
@@ -167,7 +188,7 @@ plot(stk)
 i.e. maxF, this allows an upper limit to be set on F
 
 This can also be used to model capacity
-```{r}
+```{r,fig.cap=""}
 capacity=FLQuant(1,dimnames=list(year=2009:2020))
 q       =rlnorm(1,FLQuant(0,dimnames=list(year=2009:2020)),.2)
 maxF    =q*capacity
@@ -206,20 +227,20 @@ ggplot(flqs)+
 
 Management has two main options, i.e. setting effort (as in the examples above) or relative F-at-age by changing the selection pattern.
 The selection pattern-at-age of landings is that of the catch less discards e.g.
-```{r}
+```{r,fig.cap=""}
 ggplot(FLQuants(eql,"catch.sel","discards.sel","landings.sel"))+
   geom_line(aes(age,data,col=qname))
 ```
 
 In the FLStock object there are therefore 3 selection pattern components, and unfortunate three ways of calculating each. fwd uses computeCatch to re-estimate the catch.n, landings.n and discards.n before calculating future selection patterns. 
-```{r}
+```{r,fig.cap=""}
 catch(stk)<-computeCatch(stk)
 ```
 
 In fwd the selection patterns are then calculated as harvest*discards.n/catch.n, harvest*landings.n/catch.n and discards.sel+landings.sel
 
 Simulation of gears that get rid of discarding can be done by
-```{r}
+```{r,fig.cap=""}
 noDiscards=stk
 discards.n(noDiscards)[,ac(2009:2020)]=0
 catch.n(   noDiscards)[,ac(2009:2020)]<-landings.n(noDiscards)[,ac(2009:2020)]
@@ -238,7 +259,7 @@ plot(FLStocks("No Discards"=noDiscards,"F0.1"=stk))
 # Non stationarity
 
 Non stationarity is seen in many biological processes, what happens if future fecundity decreases?
-```{r}
+```{r,fig.cap=""}
 poorFec=stk
 mat(poorFec)[1:5,ac(2009:2020)]=c(0,0,0,0,.5)
 
@@ -266,12 +287,12 @@ plot(stks)
 # Stochasticity
 
 Monte Carlo simulations based on future recruitment
-```{r}
+```{r,fig.cap=""}
 srDev=rlnorm(100,FLQuant(0,dimnames=list(year=2009:2020)),0.3)
 plot(srDev)
 ```
 
-```{r}
+```{r,fig.cap=""}
 load("/tmp/flash.RData")
 stk  =fwdWindow(stk,end=2020,eql)
 stk  =fwd(stk,f=F0.1,sr=sr,sr.residuals=srDev)
@@ -306,7 +327,7 @@ fwdControl is a more flexible but fiddly way of setting up projections. For exam
 
 This can be done using a constructor and a data.frame
 
-```{r}
+```{r,fig.cap=""}
 ctrl=fwdControl(data.frame(year    =2009:2018,
                            val     =c(refpts(eql)["f0.1","harvest"]),
                            quantity="f"))
@@ -314,13 +335,13 @@ ctrl=fwdControl(data.frame(year    =2009:2018,
 
 fwdControl is a class with 5 slots
 
-```{r}
+```{r,fig.cap=""}
 slotNames(ctrl)
 ```
 
 For now we will concerntrate on just the target and trgtArray slots.
 
-```{r}
+```{r,fig.cap=""}
 slotNames(ctrl)
 ctrl
 ```
@@ -329,7 +350,7 @@ target specifies the quantity for the projection (e.g. "f", "catch", "ssb", ...)
 
 An example with high F that decreases SSB a lot
 
-```{r}
+```{r,fig.cap=""}
 target=fwdControl(data.frame(year=2009,val=0.8,quantity="f")) 
 stk   =fwdWindow(ple4,end=2010,eql)
 
@@ -356,7 +377,7 @@ ssb( stk)[,"2010"]
 
 
 If a stock spawns mid year so the adult population is affected by fishing then the SSB constraint is within year, e.g.
-```{r}
+```{r,fig.cap=""}
 harvest.spwn(stk)[]=0.5
 
 stk=fwd(stk,ctrl=target,sr=sr)
