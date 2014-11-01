@@ -26,18 +26,11 @@ opts_chunk$set(echo  =TRUE,
 
 # Introduction
 
-An important part of stock assessment is advig  setting future management regulations, e.g. based on catches, effort or selectivity. Therefore often a stock or population (i.e. a projection) hmay be required after an assessment for a range of catches to allow managers to decide upon a TAC or within an MSE for a management measure set by an MP.
+An important part of stock assessment is advising on management regulations, e.g. based on catches, effort or selectivity. This often requires a stock projection to allow managers to decide upon a TAC or effort measures.
 
+\newthought{The precautionary approach} requires harvest control rules (HCRs) to trigger pre-agreed conservation and management action based on limit reference points to set boundaries that constrain harvesting within safe biological limits within which stocks can produce the maximum sustainable yield (MSY) and targets to ensure that management objectives are met. 
 
-\newthought{The precautionary approach}[^books_be] requires harvest control rules (HCRs) to trigger pre-agreed conservation and management action. This requires limit reference points to set boundaries that constrain harvesting within safe biological limits within which stocks can produce the maximum sustainable yield (MSY) and targets to ensure that management objectives are met. 
-
-
-The performance of HCRs, i.e. how well they meet management objectives should be evaluated, ideally using Management Strategy Evaluation (MSE) where the HCRs is tested as part of a Management Procedure (MP). Where an MP is the combination of the data collection regime stock assessment procedure and the setting of managment regulations. HCRs can be modelled using the fwd method of FLR; see the MSE document for examples of simulation testing.
-
-
-
-fwd takes objects descibing historical stock status and assumptions about future dynamics(e.g. growth, maturity, natural mortality and recruitment dynamics), then performs a projection for future options e.g. for catches, fishing mortality. 
-
+These tasks cane be done using the fwd and hcr methods. 
 
 # Libraries
 
@@ -59,7 +52,10 @@ data(ple4)
 ```
 
 # Methods
-The main method is fwd which is used to make future projections, e.g. to evaluate different management options such as Total Allowable Catches (TACs) once a stock assessment has been conducted or for simulating a Harvest Control Rule (HCR) as part of a Management Strategy Evaluation (MSE).
+fwd is used to make future projections based on catch, effort and other quatities.
+hcr will set a catch or Fishing Mortality based on current stock status and reference points. 
+
+Constraints can also be set (i.e. inter-annual bounds on TACs or effort) as well as precendence of rules (i.e. SSB must increase when a recovery plan is modelled).
 
 fwdWindow sets up future dynamics of the FLStock object and fwdControl that sets up the target options in the projections. fwdControl is very flexible but can be tricky to set up so there are a variety of methods for standard tasks, e.g. simulating a Harvest Control Rule (HCR) or running projections for F, catch and biomass target.
 
