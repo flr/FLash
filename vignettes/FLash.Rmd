@@ -89,10 +89,6 @@ ggplot(FLQuants(eql,"m","mat","stock.wt","catch.sel"))+
   facet_wrap(~qname,scale="free_y")
 ```
 
-```{r,echo=FALSE}
-stk=ple4
-```
-
 # Projecting
 
 First projections are made for F and catch, later we show how a variety of HCRs can be simulated.
@@ -105,6 +101,8 @@ F0.1=FLQuant(refpts(eql)["f0.1","harvest",drop=T],
 
 Then project forward, note that sr is also required and that recruitment is determininistic.
 ```{r,fig.cap="Projection for $F_{0.1}$"}
+stk=fwdWindow(ple4,end=2020,eql)
+
 stk=fwd(stk,f=F0.1,sr=sr)
 
 plot(FLStocks("Historic"=ple4,"F0.1"=stk))
