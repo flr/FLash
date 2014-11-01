@@ -91,7 +91,7 @@ ggplot(FLQuants(eql,"m","mat","stock.wt","catch.sel"))+
 
 ```{r,echo=FALSE}
 stk=ple4
-save(stk,eql,sr,file="/tmp/flash.RData")
+#save(stk,eql,sr,file="/tmp/flash.RData")
 ```
 
 # Projecting
@@ -288,8 +288,11 @@ srDev=rlnorm(100,FLQuant(0,dimnames=list(year=2009:2020)),0.3)
 plot(srDev)
 ```
 
+```{r,echo=FALSE}
+stk=ple4
+```
+
 ```{r,fig.cap=""}
-load("/tmp/flash.RData")
 stk  =fwdWindow(stk,end=2020,eql)
 stk  =fwd(stk,f=F0.1,sr=sr,sr.residuals=srDev)
 plot(stk)
@@ -298,8 +301,11 @@ plot(stk)
 
 # Harvest Control Rules
 
+```{r,echo=FALSE}
+stk=ple4
+```
+
 ```{r}
-load("/tmp/flash.RData")
 source('~/Desktop/flr/git/FLash/R/hcr.R')
 
 hvt=hcr(stk,refpts(eql)["msy"])
@@ -435,8 +441,11 @@ hcrF=function(iYr,SSB,Bpa,Blim,Fmin,Fmax){
 
 
 Recover stock to target SSB level corresponding to the 1980s in 2020 with a constant F strategy
+```{r,echo=FALSE}
+stk=ple4
+```
+
 ```{r6}
-load("/tmp/flash.RData")
 stk=fwdWindow(stk,end=2020,eql)
 
 ssbTarget = mean(ssb(stk)[,ac(1970:1989)])
