@@ -21,12 +21,14 @@ opts_chunk$set(echo  =TRUE,
                comment=NA,
                message=FALSE,
                tidy   =FALSE,
-               warning=FALSE)
+               warning=FALSE,
+               fig.height=6,
+               fig.width =6)
 ```
 
-# Introduction
+# Stock Projection
 
-An important part of stock assessment is conducting stock projections to advise on management regulations e.g. catches, effort or changes to selection patterns.
+An important part of stock assessment is conducting projections to advise on management regulations e.g. changes in catches, effort or selection pattern. 
 
 While the precautionary approach requires harvest control rules (HCRs) to trigger pre-agreed conservation and management action based on limit and target reference points to ensure that management objectives are met. 
 
@@ -39,35 +41,29 @@ library(FLBRP)
 library(ggplotFL)
 ```
 
-
 ```{r,echo=FALSE}
 theme_set(theme_bw(6))
 ```
-For the examples we use the ple4 FLSock object.
 
-```{r,fig.cap=""}
+For the examples we will use the ple4 FLSock object.
+
+```{r}
 data(ple4)
 ```
 
 # Methods
 fwd is used to make future projections based on catch, effort and other quatities.
-hcr sets a catch or fishing mortality based on current stock status and reference points. 
+fwdWindow sets up the future in the slots of the FLStock object. 
 
-Constraints can also be set (i.e. inter-annual bounds on TACs or effort), rules can have precendence, e.g. SSB must increase each year in a recovery plan is modelled.
+Constraints can be set (i.e. inter-annual bounds on TACs or effort) and rules may have different components, e.g. in a recovery plan after setting a total allowable catch (TAC) SSB must increase each yea. This requires 4 stages, i) estimating F, ii) calculating the catch, iii) checking that SSB will increase and iv) adjusting the TAC.   
 
-fwdWindow sets up future dynamics of the FLStock object. 
-
-fwdControl sets up the target options in the projections. It is very flexible but can be tricky to set up so there are a variety of methods for standard tasks, e.g. simulating a Harvest Control Rule (HCR) or running projections for F, catch and biomass target.
+fwdControl can be used to set up target options in the projections. It is very flexible but is tricky to set up so there are a variety of methods for standard tasks, e.g. simulating a Harvest Control Rule (HCR) by using hcr based on current stock status and reference points. 
 
 # fwdWindow
-To perform a projection requires making assumptions about future processes such as growth and recruitment and any management effects on selectivity.
-This requires extending an FLStock object using fwdWindow and an FLBRP object. In this way projections and equilibrium dynamics and reference points are consistent.
+To perform a projection requires making assumptions about future processes such as growth and recruitment and any management effect on selectivity.
+This requires extending an FLStock object using fwdWindow. 
 
-```{r,eval=FALSE}
-stk=fwdWindow(ple4,end=2020,eql)
-```
-
-Recruitment is based on a stock recruitment relationship, this can be obtained by fitting to the historic time series.
+Recruitment is based on a stock recruitment relationship, which can be obtained by fitting to the historic time series.
 
 ```{r,fig.cap=""}
 sr   =as.FLSR(ple4,model="bevholt")
@@ -83,10 +79,16 @@ plot(eql)+theme(legend.position="bottom")
 ```
 
 and the future stock parameters
-```{r,fig.cap="Stock Parameters in future projection"}
+```{r,fig.height=4,fig.cap="Stock Parameters in future projection"}
 ggplot(FLQuants(eql,"m","mat","stock.wt","catch.sel"))+
   geom_line(aes(age,data))+
   facet_wrap(~qname,scale="free_y")
+```
+
+This can be done with an FLBRP object ensuring that projections, equilibrium dynamics and reference points are consistent.
+
+```{r,eval=FALSE}
+stk=fwdWindow(ple4,end=2020,eql)
 ```
 
 # Projecting
