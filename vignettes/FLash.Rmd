@@ -42,7 +42,7 @@ library(ggplotFL)
 ```
 
 ```{r,echo=FALSE}
-theme_set(theme_bw(6))
+theme_set(theme_bw(10))
 ```
 
 For the examples we will use the ple4 FLSock object.
