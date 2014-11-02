@@ -1,0 +1,1016 @@
+---
+title: "FLash:::fwd for stock projection"
+author: "Laurence Kell"
+date: "August 13th, 2014"
+output: rmarkdown::tufte_handout
+---
+
+<!--
+%% \VignetteEngine{knitr::knitr}
+-->
+
+```{r knitr_init, echo=FALSE, results="asis"}
+library(knitr)
+
+## Global options
+opts_chunk$set(echo  =TRUE,
+               eval  =TRUE,
+               cache =FALSE,
+               cache.path="cache/",
+               prompt=FALSE,
+               comment=NA,
+               message=FALSE,
+               tidy   =FALSE,
+               warning=FALSE,
+               fig.height=6,
+               fig.width =6)
+```
+
+# Stock Projection
+
+An important part of stock assessment is conducting projections to advise on management regulations e.g. changes in catches, effort or selection pattern. 
+
+While the precautionary approach requires harvest control rules (HCRs) to trigger pre-agreed conservation and management action based on limit and target reference points to ensure that management objectives are met. 
+
+These tasks are done using the fwd and hcr methods. 
+
+As well as FLash we use the FLBRP and ggplotFL packages
+```{r,echo=TRUE,eval=TRUE,message=FALSE,warning=FALSE}
+library(FLash)
+library(FLBRP)
+library(ggplotFL)
+```
+
+```{r,echo=FALSE}
+theme_set(theme_bw(10))
+```
+
+For the examples we will use the ple4 FLSock object.
+
+```{r}
+data(ple4)
+```
+
+# Methods
+fwd is used to make future projections based on catch, effort and other quatities.
+fwdWindow sets up the future in the slots of the FLStock object. 
+
+Constraints can be set (i.e. inter-annual bounds on TACs or effort) and rules may have different components, e.g. in a recovery plan after setting a total allowable catch (TAC) SSB must increase each yea. This requires 4 stages, i) estimating F, ii) calculating the catch, iii) checking that SSB will increase and iv) adjusting the TAC.   
+
+fwdControl can be used to set up target options in the projections. It is very flexible but is tricky to set up so there are a variety of methods for standard tasks, e.g. simulating a Harvest Control Rule (HCR) by using hcr based on current stock status and reference points. 
+
+# fwdWindow
+To perform a projection requires making assumptions about future processes such as growth and recruitment and any management effect on selectivity.
+This requires extending an FLStock object using fwdWindow. 
+
+Recruitment is based on a stock recruitment relationship, which can be obtained by fitting to the historic time series.
+
+```{r,fig.cap=""}
+sr   =as.FLSR(ple4,model="bevholt")
+sr   =fmle(sr,control=list(silent=TRUE))
+```
+
+Then used with FLBRP to give the expected and/or equilibrium dynamics
+```{r,fig.cap="Equilibrium Dynamics",fig.height=4}
+eql=FLBRP(ple4,sr=sr)
+eql=brp(eql)
+
+plot(eql)+theme(legend.position="bottom")
+```
+
+and the future stock parameters
+```{r,fig.height=4,fig.cap="Stock Parameters in future projection"}
+ggplot(FLQuants(eql,"m","mat","stock.wt","catch.sel"))+
+  geom_line(aes(age,data))+
+  facet_wrap(~qname,scale="free_y")
+```
+
+This can be done with an FLBRP object ensuring that projections, equilibrium dynamics and reference points are consistent.
+
+```{r,eval=FALSE}
+stk=fwdWindow(ple4,end=2020,eql)
+```
+
+# Projecting
+
+First projections are made for F and catch, later we show how a variety of HCRs can be simulated.
+
+Simulate fishing at $F_{0.1}$, first create an FLQuant with the target Fs
+```{r}
+F0.1=FLQuant(refpts(eql)["f0.1","harvest",drop=T],
+             dimnames=list(year=2009:2020))
+```
+
+Then project forward, note that sr is also required and that recruitment is determininistic.
+```{r,fig.cap="Projection for $F_{0.1}$"}
+stk=fwdWindow(ple4,end=2020,eql)
+
+stk=fwd(stk,f=F0.1,sr=sr)
+
+plot(FLStocks("Historic"=ple4,"F0.1"=stk))
+```
+
+Projection can be made for a range of Fs i.e. alternative reference points
+```{r,fig.cap="Comparision of projections for different F reference points"}
+library(plyr)
+
+dimnames(refpts(eql))$refpt
+
+refs=refpts(eql)[c("msy","f0.1","fmax","spr.30"),"harvest",drop=T]
+
+targetF=FLQuants(mlply(data.frame(refs),
+                       function(refs) 
+                           FLQuant(refs,dimnames=list(year=2009:2020))))
+
+names(targetF)=names(refs)
+
+names(targetF)[]="f"
+stks=fwd(stk,targetF,sr=sr)
+
+plot(stks)
+```
+
+Catch projections are done in a similar way e.g. for $MSY$
+```{r,fig.cap="Comparioson of catch Projections"}
+refpts(eql)["msy"]
+
+refpts(eql)["msy",c("harvest","yield")]
+
+msy=FLQuant(c(refpts(eql)["msy","yield"]),dimnames=list(year=2009:2020))
+
+stks=fwd(stk,catch=msy,sr=sr)
+
+plot(stks)
+```
+
+Compare F and Catch projections, e.g. for $MSY$ and $F_{MSY}$
+```{r,fig.cap="Comparison of Catch and F projections"}
+msys=FLQuants("f"    =targetF[[1]],
+              "catch"=msy)
+stks=fwd(stk,msys,sr=sr)
+
+plot(stks)
+```
+
+Therefore there is a constraint on F (maxF), to model limits on effort and capacity. 
+```{r,fig.cap=""}
+catch=FLQuant(c(refpts(eql)["msy","yield"])*2,
+                          dimnames=list(year=2009:2020))
+
+stk=fwd(stk,catch=catch,sr=sr)
+
+plot(stk)
+```
+
+To model capacity
+```{r,fig.cap=""}
+capacity=FLQuant(1,dimnames=list(year=2009:2020))
+q       =rlnorm(1,FLQuant(0,dimnames=list(year=2009:2020)),.2)
+maxF    =q*capacity
+
+stk=fwd(stk,catch=catch,sr=sr,maxF=maxF)
+
+plot(stk)
+```
+
+A variety of quantities other than catch and F can be considered in projections i.e. ssb, biomass,  landings, discards, f, f.catch, f.landings, f.discards, effort, costs, revenue, profit, mnsz.
+
+
+```{r1}
+f.landings=function(x) apply((harvest(x)*
+                   landings.n(x)/
+                   catch.n(x))[ac( range(stk)["minfbar"]:range(stk)["maxfbar"])],2,mean)
+f.discards=function(x) apply((harvest(x)*
+                   landings.n(x)/
+                   catch.n(x))[ac( range(stk)["minfbar"]:range(stk)["maxfbar"])],2,mean)
+mnsz     =function(x) apply(stock.n(x)*stock.wt(x),2,sum)/
+                       apply(stock.n(x),2,sum)
+                  
+flqs=FLQuants(stk,"ssb", "biomass"=stock,  
+                  "landings", "discards", "fbar",
+                  "f.landings", "f.discards","mnsz")
+         
+#             effort, costs, revenue, profit, .
+
+ggplot(flqs)+
+  geom_line(aes(year,data))+
+  facet_grid(qname~.,scale="free_y")
+```
+
+
+## Selection pattern
+
+Management has two main options, i.e. setting effort (as in the examples above) or relative F-at-age by changing the selection pattern.
+
+
+In the FLStock object there are 3 selection pattern components, and unfortunately three ways of calculating each. 
+
+fwd uses computeCatch to re-estimate the catch.n, landings.n and discards.n before calculating future selection patterns.
+```{r,fig.cap=""}
+ggplot(FLQuants(eql,"catch.sel","discards.sel","landings.sel"))+
+  geom_line(aes(age,data,col=qname))
+```
+
+
+The selection patterns are then calculated as harvest*discards.n/catch.n, harvest*landings.n/catch.n and discards.sel+landings.sel
+
+Simulation of gears that get rid of discarding can be done by
+```{r,fig.cap=""}
+noDiscards=stk
+discards.n(noDiscards)[,ac(2009:2020)]=0
+catch.n(   noDiscards)[,ac(2009:2020)]<-landings.n(noDiscards)[,ac(2009:2020)]
+catch(noDiscards)<-computeCatch(noDiscards)
+
+## Note adjustment of harvest
+harvest(noDiscards)[,ac(2009:2020)]=harvest(stk)[,ac(2009:2020)]*
+  landings.n(stk)[,ac(2009:2020)]/catch.n(stk)[,ac(2009:2020)]
+
+noDiscards=fwd(noDiscards,f=F0.1,sr=sr)
+stk       =fwd(stk,       f=F0.1,sr=sr)
+
+plot(FLStocks("No Discards"=noDiscards,"F0.1"=stk))
+```
+
+## Non stationarity
+
+Non stationarity is seen in many biological processes, what happens if future fecundity decreases?
+```{r,fig.cap=""}
+poorFec=stk
+mat(poorFec)[1:5,ac(2009:2020)]=c(0,0,0,0,.5)
+
+poorFec=fwd(poorFec,f=F0.1,sr=sr)
+
+plot(FLStocks("Reduced \nFecundity"=poorFec,"F0.1"=stk))
+```
+
+Modelling regime shift in the stock recruitment relationship
+```{r12,eval=FALSE,echo=FALSE}
+#### SRR regime shifts
+sr1=sr
+model(sr)=bevholtSV()
+sr1=fmle(sr,fixed=list(spr0=c(spr0(eql),s=0.75)))
+sr2=fmle(sr,fixed=list(spr0=c(spr0(eql),v=0.75*params(sr)["v"])))
+
+srs=FLSRs("No Change"=sr,"Reduction in \nDensity Dependence"=sr1,"Reduction in K"=sr2)
+
+stks=FLStocks(llply(srs, function(x) fwd(stk,f=F0.1,sr=ab(x))))
+
+plot(stks)
+```
+
+
+# Monte Carlo Simulations 
+
+Simulating process error in future recruitment
+```{r,fig.cap=""}
+srDev=rlnorm(100,FLQuant(0,dimnames=list(year=2009:2020)),0.3)
+plot(srDev)
+```
+
+```{r,echo=FALSE}
+stk=ple4
+```
+
+```{r,fig.cap=""}
+stk  =fwdWindow(stk,end=2020,eql)
+stk  =fwd(stk,f=F0.1,sr=sr,sr.residuals=srDev)
+plot(stk)
+```
+
+
+# Harvest Control Rules
+
+```{r,echo=FALSE}
+stk=ple4
+```
+
+```{r}
+source('~/Desktop/flr/git/FLash/R/hcr.R')
+
+hvt=hcr(stk,refpts(eql)["msy"])
+hvt
+tac(stk,eql,hvt[[1]])
+```
+
+# fwdControl  
+
+fwdControl is a more flexible but fiddly way of setting up projections. For example to replicate the $F_{0.1}$ projection above requires setting up a fwdControl object.
+
+fwdControl has 5 slots and sets up a systems of non-linear equations
+
+
+## target   
+## trgtArray   
+## effort   
+## effArray   
+## blocks	
+
+A nonlinear system of equations is a set of simultaneous equations in which the unknowns  appear as variables of a function which is not a polynomial of degree one and the equations to be solved cannot be written as a linear combination of the unknown variables that appear in them. 
+
+In fwd the variables correspond to the inputs (i.e. effort) to the system and the equations predict the outputs of the system, e.g. catch, SSB, Fishing mortality, etc.
+
+fwdControl can be set up using a constructor with a data.frame
+
+```{r,fig.cap=""}
+ctrl=fwdControl(data.frame(year    =2009:2018,
+                           val     =c(refpts(eql)["f0.1","harvest"]),
+                           quantity="f"))
+```
+
+fwdControl is a class with 5 slots
+
+```{r,fig.cap=""}
+slotNames(ctrl)
+```
+
+For now we will concerntrate on just the target and trgtArray slots.
+
+```{r,fig.cap=""}
+slotNames(ctrl)
+ctrl
+```
+
+target specifies the quantity for the projection (e.g. "f", "catch", "ssb", ...) and the projection year. The projection can be a target by specifying it in val. While min and max specify bounds. For example if you want to project for a target F but also to check that SSB does not fall below an SSB limit. 
+
+An example with high F that decreases SSB a lot
+
+```{r,fig.cap=""}
+target=fwdControl(data.frame(year=2009,val=0.8,quantity="f")) 
+stk   =fwdWindow(ple4,end=2010,eql)
+
+stk=fwd(stk,ctrl=target,sr=eql)
+
+fbar(stk)[,"2009"]
+ssb( stk)[,"2010"]
+```
+
+Note that it is the end of year biomass that is constrained as in this case spawning is at Jan 1st and so fishing only has an effect of SSB next year
+
+Constrain SSB so that it doesnt fall below 250000
+```{r}
+target  <-fwdControl(data.frame(year=c(2009,2009),
+                             val =c( 0.8,  NA),
+                             min =c(NA,230000),
+                             quantity=c("f","ssb")))
+
+stk=fwd(stk,ctrl=target,sr=sr)
+
+fbar(stk)[,"2009"]
+ssb( stk)[,"2010"]
+```
+
+
+If a stock spawns mid year so the adult population is affected by fishing then the SSB constraint is within year, e.g.
+```{r,fig.cap=""}
+harvest.spwn(stk)[]=0.5
+
+stk=fwd(stk,ctrl=target,sr=sr)
+
+fbar(stk)[,  "2009"]
+ssb( stk)[,c("2009","2010")]
+```
+
+
+# Harvest Control Rules
+```{rhcr-fc}
+msy  =refpts(eql)["msy", "yield"]
+bmsy =refpts(eql)["msy", "ssb"]
+f0.1 =refpts(eql)["f0.1","harvest"]
+stk  =fwdWindow(stk,end=2020,eql)
+
+#### constant catch with an upper F bound
+ctrl=fwdControl(data.frame(year    =rep(2009:2020,each=2),
+                           val     =rep(c(msy*0.7,NA),12),
+                     	     max     =rep(c(NA,f0.1),12),
+                           quantity=rep(c("catch","f"),12)))
+stk=fwd(stk,ctrl=ctrl,sr=sr)
+
+plot(stk[,ac(2005:2020)])
+```
+
+Reduce F to F0.1 but only let catch change by 15% a year
+```{rhcr-F-TACconstraint}
+ctrl=fwdControl(data.frame(year    =rep(2009:2020,each=2),
+                           rel.year=c(t(array(c(rep(NA,12),2008:2019),c(12,2)))),
+                           val     =rep(c(f0.1,NA),12),
+                           min     =rep(c(NA,0.85),12),
+                           quantity=rep(c("f","catch"),12)))
+stk=fwd(stk,ctrl=ctrl,sr=sr)
+
+plot(stk[,ac(2005:2020)])
+```
+
+10% SSB increase 
+```{rhcr-10ssb}
+ctrl=fwdControl(data.frame(year    =rep(2009:2020,each=2),
+                           rel.year=c(t(array(c(2008:2019,rep(NA,12)),c(12,2)))),
+                           max     =rep(c(f0.1,NA),12),
+                           val     =rep(c(NA,1.1),12),
+                           quantity=rep(c("ssb","f"),12)))
+stk=fwd(stk,ctrl=ctrl,sr=sr)
+
+plot(stk[,ac(2005:2019)])
+```
+
+
+```{rhcr-func}
+hcrF=function(iYr,SSB,Bpa,Blim,Fmin,Fmax){
+    val =pmin(Fmax,Fmax-(Fmax-Fmin)*(Bpa-SSB)/(Bpa-Blim))
+    trgt=fwdTarget(year=iYr+1,quantity="f",valueval)
+
+    return(trgt)}
+```
+
+
+Recover stock to target SSB level corresponding to the 1980s in 2020 with a constant F strategy
+```{r,echo=FALSE}
+stk=ple4
+```
+
+```{r6}
+stk=fwdWindow(stk,end=2020,eql)
+
+ssbTarget = mean(ssb(stk)[,ac(1970:1989)])
+
+## function to minimise
+f<-function(x,stk,ssbTarget,ctrl,sr){
+  
+       # set target F for all years
+       ctrl@target[,   "val"] =x
+       ctrl@trgtArray[,"val",]=x
+
+       # project
+       stk=fwd(stk,ctrl=ctrl,sr=sr)
+       
+       # Squared Difference
+       return((ssb(stk)[,ac(range(stk)["maxyear"])]-ssbTarget)^2)}
+
+## control object
+ctrl=fwdControl(data.frame(year=2009:2020,val=.5,rel=2008,quantity="f"))
+
+xmin=optimize(f, c(0.1, 1.0), tol = 0.0000001, stk=stk, ssbTarget=ssbTarget, 
+              ctrl=ctrl, sr=eql)
+ctrl=fwdControl(data.frame(year=2009:2020,val=xmin$minimum,rel=2008,quantity="f"))
+
+stk     =fwd(stk,ctrl=ctrl,sr=eql)
+
+# update catch slot
+catch(stk) = computeCatch(stk)
+
+# Have we reached the target?
+ssbTarget
+ssb(stk)
+# At what level of constant F
+fbar(stk)
+
+plot(stk)+
+  geom_hline(aes())
+```
+
+Recover stock to the desired SSB in 2006 with a constant Catch strategy
+Here val can be anything in the ctrl because it is overwritten in the optimisation loop
+
+```{r7}
+ctrl=fwdControl(data.frame(year=2009:2020,val=c(catch(stk)[,"2001"]),quantity="catch"))
+
+xmin=optimize(f, c(100, 100000), tol = 0.0000001, stk=stk, 
+              ssbTarget=ssbTarget, ctrl=ctrl, sr=sr)
+ctrl=fwdControl(data.frame(year=2009:2020,val=xmin$minimum,quantity="catch"))
+stkC      =fwd(stk,ctrl=ctrl,sr=sr)
+
+# Have we reached the target?
+ssbTarget
+ssb(stkC)[,ac(2002:2020)]
+# At what level of constant catch
+computeCatch(stkC)[,ac(2002:2020)]
+# And at what level of F
+fbar(stkC)[,ac(2002:2006)]
+# Update the catch slot
+catch(stkC) = computeCatch(stkC)
+# 'ave a butchers
+plot(stkC[,ac(1957:2006)])
+```
+
+
+```{r8,eval=FALSE}
+# Assessment up to and including 2001
+
+# set courtship and egg laying in Autumn
+stk@m.spwn[]      =0.66
+stk@harvest.spwn[]=0.66
+
+# assessment is in year 2002, set catch constraint in 2002 and a first guess for F in 2003
+ctrl          =fwdControl(data.frame(year=2002:2003,val=c(85000,.5),quantity=c("catch","f")))
+stk    =fwd(stk, ctrl=ctrl, sr=list(model="mean", params=FLPar(25000)))
+
+# HCR specifies F=0.1 if ssb<100000, F=0.5 if ssb>300000
+# otherwise linear increase as SSB increases
+min.ssb=100000
+max.ssb=300000
+min.f  =0.1
+max.f  =0.5
+
+# slope of HCR
+a.    =(max.f-min.f)/(max.ssb-min.ssb)
+b.    =min.f-a.*min.ssb
+
+# plot of HCR
+plot(c(0.0,min.ssb,max.ssb,max.ssb*2),c(min.f,min.f,max.f,max.f),type="l",ylim=c(0,max.f*1.25),xlim=c(0,max.ssb*2))
+
+## find F through iteration
+t.    =999
+i     =0
+while (abs(ctrl@target[2,"val"]-t.)>10e-6 & i<50)
+   {
+   t.=ctrl@target[2,"val"]  ## save last val of F
+
+   # calculate new F based on SSB last iter
+   ctrl@target[2,"val"]    =a.*c(ssb(stk)[,"2003"])+b.
+   ctrl@trgtArray[2,"val",]=a.*c(ssb(stk)[,"2003"])+b.
+   stk=fwd(stk, ctrl=ctrl, sr=list(model="mean", params=FLPar(25000)))
+
+   # 'av a gander
+   points(c(ssb(stk)[,"2003"]),c(ctrl@target[2,"val"]),cex=1.25,pch=19,col=i)
+   print(c(ssb(stk)[,"2003"]))
+   print(c(ctrl@target[2,"val"]))
+   i=i+1
+   }
+
+# F bounds
+stk      =fwd(stk, ctrl=ctrl, sr=list(model="mean",params=FLPar(25000)))
+plot(FLStocks(stk))
+```
+
+# Examples
+
+## Targets  
+
+## Limits   
+
+## Relative targets and limits	
+
+## Harvest Control Rules	
+
+## Multi-annual management  
+
+## Recovery Plans	
+## Long-term plans 	
+## Technical measures	
+
+# References	
+
+
+```{r9,eval=FALSE,echo=FALSE}
+#### Create a random variable for M
+albM   =stk
+m(albM)=propagate(m(albM),100)
+
+mDev=rlnorm(prod(dim(m(albM))),0,0.3)
+mean(mDev)
+var(mDev)^.5
+
+m(albM)=m(albM)*FLQuant(mDev,dimnames=dimnames(m(albM)))
+plot(m(albM))
+
+harvest(albM)=computeHarvest(albM)
+catch(  albM)=computeCatch(  albM,"all")
+
+plot(FLStocks(albM,stk28))
+ 
+ctrl=fwdControl(data.frame(year=2009:2020,val=ctch,quantity="catch"))
+albM     =fwd(albM,ctrl=ctrl,sr=sr)
+
+plot(albM)
+```
+
+```{r10,eval=FALSE,echo=FALSE}
+#### Create a random variable for M
+albM1   =albM
+m(albM1)[1:3,]          =m(albM)[1:3,]*2
+
+harvest(albM1)=computeHarvest(albM1)
+catch(  albM1)=computeCatch(  albM1,"all")
+albM1         =fwd(albM1,ctrl=ctrl,sr=sr)
+
+albM2   =albM
+m(albM2)[,ac(2000:2020)]=m(albM)[,ac(2000:2020)]*2
+
+harvest(albM2)=computeHarvest(albM2)
+catch(  albM2)=computeCatch(  albM2,"all")
+albM2         =fwd(albM2,ctrl=ctrl,sr=sr)
+ 
+plot(FLStocks(albM,albM1,albM2))
+```
+
+```{r11,eval=FALSE,echo=FALSE}
+#### process error in recruitment
+srDev=FLQuant(rlnorm(20*100,0.0,0.3),dimnames=list(year=2008:2020,iter=1:100))
+sr=fwd(albM,ctrl=ctrl,sr=sr,sr.residuals=srDev)
+plot(sr)
+```
+
+
+```{r13,eval=FALSE,echo=FALSE}
+#### SRR regime shifts
+albBRP=brp(FLBRP(albM))
+refpts(albBRP)
+
+albSV3=fmle(albSV,fixed=list(s=qnorm(seq(0.01,0.99,length.out=101),.75,.1)))
+albSV3=fwd(albSV3,ctrl=ctrl,sr=sr,sr.residuals=srDev)
+
+plot(albSV1,albSV2,albSV3)
+```
+
+```{r14,eval=FALSE,echo=FALSE}
+# F bounds
+stk      =fwd(stk, ctrl=ctrl, sr=list(model="mean",params=FLPar(25000)))
+plot(FLStocks(stk))
+```
+
+```{r15,eval=FALSE,echo=FALSE}
+library(FLash)
+library(FLAssess)
+
+#### Set up a short term forecast for an FLStock object by adding extra years
+## The default forecast is 3 years,
+alb3=stf(alb)
+
+## Check what?s happened
+summary(alb)
+summary(alb3)
+
+## by default future F is the mean of last 3 years
+mean(fbar(alb)[,ac(2007-(0:2))])
+fbar(alb3)[,ac(2007+(1:3))]
+
+## by default future F is the mean of last 3 years
+mean(fbar(alb)[,ac(2007-(0:2))])
+fbar(alb3)[,ac(2007+(1:3))]
+```
+
+```{r16,eval=FALSE,echo=FALSE}
+## Constant F Projection for a 20 year projection
+stk=stf(alb,nyear=20)
+
+#### SRR
+sr       =as.FLSR(alb)
+model(sr)=bevholt()
+sr       =fmle(sr)
+
+#### BRPs
+albBRP=FLBRP(alb,sr=sr)
+computeRefpts(albBRP)
+
+
+albBRP=brp(albBRP)
+
+
+# Use F0.1 as fishing mortality target
+F0.1=refpts(albBRP)["f0.1","harvest",drop=T]
+#### bug
+ctrl     =fwdControl(data.frame(
+               year    =2008:2027,
+               val     =F0.1,
+               quantity="f"))
+
+albF1     =fwd(stk,ctrl=ctrl,sr=sr)
+
+plot(albF1)
+ctrl     =fwdControl(data.frame(
+               year    =2008:2027,
+               val     =F0.1*0.5,
+               quantity="f"))
+albF2     =fwd(stk, ctrl=ctrl, sr=sr)
+
+ctrl     =fwdControl(data.frame(
+               year    =2008:2027,
+               val     =F0.1*2.0,
+               quantity="f"))
+albF3     =fwd(stk, ctrl=ctrl, sr=sr)
+
+
+## Create an FlStock object
+albF0.1=FLStocks("F0.1"=albF1,"half"=albF2,"double"=albF3)
+plot(albF0.1)
+
+## Cut the plots
+plot(lapply(albF0.1,window,start=1990))
+
+## Compare alternatives
+lapply(lapply(albF0.1,window,start=2008),computeCatch)
+
+#### Total catch
+lapply(lapply(lapply(albF0.1,window,start=2008),computeCatch),sum)
+
+#### Short-term
+unlist(lapply(lapply(lapply(albF0.1,window,start=2008,end=2013),computeCatch),sum))
+#### Medium-term
+unlist(lapply(lapply(lapply(albF0.1,window,start=2016,end=2020),computeCatch),sum))
+#### Long-term
+unlist(lapply(lapply(lapply(albF0.1,window,start=2023,end=2027),computeCatch),sum))
+
+```
+
+```{r17,eval=FALSE,echo=FALSE}
+#### constant catch startegies
+ctch=mean(computeCatch(alb)[,ac(2003:2007)])
+
+albC=FLStocks()
+ctrl=fwdControl(data.frame(year=2008:2027,val=ctch,quantity="catch"))
+albC[["1.0"]]     =fwd(stk,ctrl=ctrl,sr=sr)
+
+ctrl     =fwdControl(data.frame(year=2008:2027,val=0.5*ctch,quantity="catch"))
+albC[["0.5"]]     =fwd(stk,ctrl=ctrl,sr=sr)
+
+ctrl     =fwdControl(data.frame(year=2008:2027,val=1.5*ctch,quantity="catch"))
+albC[["1.5"]]     =fwd(stk,ctrl=ctrl,sr=sr)
+plot(albC)
+
+#### compare startegies
+plot(FLStocks(albC[[1]],albF0.1[[1]]))
+
+```
+
+```{r18,eval=FALSE,echo=FALSE}
+#### constant catch with an upper F bound
+ctrl=fwdControl(data.frame(year    =rep(2008:2027,each=20),
+                            val     =rep(c(ctch*1.5,NA),20),
+  		      max     =rep(c(NA,F0.1),20),
+                            quantity=rep(c("catch","f"),20)))
+albFC=fwd(stk,ctrl=ctrl,sr=sr)
+plot(albFC)
+```
+
+```{r19,eval=FALSE,echo=FALSE}
+#### 5% F reduction
+ctrl=fwdControl(data.frame(year    =rep(2008:2027,each=2),
+                            rel.year=c(t(array(c(2007:2026,rep(NA,20)),c(20,2)))),
+                            val     =rep(c(0.95,NA),20),
+                            min     =rep(c(NA,F0.1*.5),20),
+                            quantity=rep(c("catch","f"),20)))
+albFC=fwd(stk,ctrl=ctrl,sr=sr)
+plot(albFC)
+```
+
+```{r20,eval=FALSE,echo=FALSE}
+#### 10% SSB increase
+ctrl=fwdControl(data.frame(year    =2008:2027,
+                            rel.year=2007:2026,
+                            min     =1.10,
+                            quantity="ssb"))
+albSSB=fwd(stk,ctrl=ctrl,sr=sr)
+plot(albSSB)
+```
+
+```{r21,eval=FALSE,echo=FALSE}
+hcrF=function(iYr,SSB,Bpa,Blim,Fmin,Fmax){
+    val =pmin(Fmax,Fmax-(Fmax-Fmin)*(Bpa-SSB)/(Bpa-Blim))
+    trgt=fwdTarget(year=iYr+1,quantity="f",valueval)
+
+    return(trgt)}
+```
+
+```{r22,eval=FALSE,echo=FALSE}
+## Ogives
+dnormal=function(x,a,sL,sR){
+  pow=function(a,b) a^b
+
+  func=function(x,a,sL,sR){
+    if (x < a) return(pow(2.0,-((x-a)/sL*(x-a)/sL)))
+    else       return(pow(2.0,-((x-a)/sR*(x-a)/sR)))}
+
+  sapply(x,func,a,sL,sR)}
+
+logistic=function(x,a50,ato95){
+  pow=function(a,b) a^b
+
+  func=function(x,a50,ato95){
+     if ((a50-x)/ato95 > 5)   return(0)
+     if ((a50-x)/ato95 < -5)  return(1)
+
+     return(1.0/(1.0+pow(19.0,(a50-x)/ato95)))}
+
+  sapply(x,func,a50,ato95)}
+
+prices    =data.frame(rbind(cbind(Age=1:10,Price=dnormal( 1:10,3,10,20),Type="Peaking"),
+                             cbind(age=1:10,Price=logistic(1:10,2,3),    Type="Increasing")))
+prices$Age=as.numeric(ac(prices$Age))
+
+p    = ggplot(prices,aes(x=Age, y=Price, group=Type))
+p    = p + geom_line(aes(colour=Type))
+p
+
+refIPrice=brp(FLBRP(alb,fbar=seq(0,1,length.out=101)))
+refPPrice=refIPrice
+
+price(refIPrice)=logistic(1:15,4,3)
+price(refPPrice)=dnormal( 1:15,5,1,5)
+
+refIPrice=brp(refIPrice)
+refPPrice=brp(refPPrice)
+
+breakEven=refIPrice
+#### bug why not no recycling
+refpts(breakEven)=refpts(as.numeric(c(refpts(refIPrice)["fmax","revenue"]*2,rep(NA,7))),refpt=c("breakEven"))
+computeRefpts(breakEven)[,"revenue"]
+
+vcost(refIPrice)=c(computeRefpts(breakEven)[,"revenue"]*0.20)
+fcost(refIPrice)=vcost(refIPrice)*4.0
+
+vcost(refPPrice)=vcost(refIPrice)
+fcost(refPPrice)=fcost(refIPrice)
+
+refIPrice=brp(refIPrice)
+refPPrice=brp(refPPrice)
+
+price(refIPrice)=price(refIPrice)/c(refpts(refIPrice)["mey","profit"])
+price(refPPrice)=price(refPPrice)/c(refpts(refPPrice)["mey","profit"])
+
+refIPrice=brp(refIPrice)
+refPPrice=brp(refPPrice)
+
+plot(refPPrice)
+plot(refIPrice)
+```
+
+```{r23,eval=FALSE,echo=FALSE}
+data(ple4)
+
+# Set up the stock for the next 6 years
+stk =stf(ple4,6)
+
+# Set a constant recruitment based on the geometric mean of last 10 years
+mnRec = FLPar(exp(mean(log(rec(ple4)[,ac(1992:2001)]))))
+# Set ssb target to level 19 years ago
+ssbTarget = ssb(ple4)[,"1992"]
+
+## function to minimise
+f = function(x,stk,ssbTarget,ctrl,sr)
+       {
+       ctrl@target[,"val"]    =x
+       ctrl@trgtArray[,"val",]=x
+
+       ssb.=c(ssb(fwd(stk,ctrl=ctrl,sr=sr))[,"2006"])
+
+       return((ssb.-ssbTarget)^2)
+       }
+
+## Recover stock to BMY in 2006 with a constant F strategy
+ctrl=fwdControl(data.frame(year=2002:2006,val=.5,rel=2001,quantity="f"))
+
+xmin=optimize(f, c(0.1, 1.0), tol = 0.0000001, stk=stk, ssbTarget=ssbTarget, ctrl=ctrl, sr=list(model="mean",params=mnRec))
+ctrl=fwdControl(data.frame(year=2002:2006,val=xmin$minimum,rel=2001,quantity="f"))
+stkF     =fwd(stk,ctrl=ctrl,sr=list(model="mean", params=mnRec))
+
+# update catch slot
+catch(stkF) = computeCatch(stkF)
+
+# Have we reached the target?
+ssbTarget
+ssb(stkF)[,ac(2002:2006)]
+# At what level of constant F
+fbar(stkF)[,ac(2002:2006)]
+# 'ave a butchers
+plot(stkF[,ac(1957:2006)])
+
+plot(albSSB)
+```
+
+```{r24,eval=FALSE,echo=FALSE}
+data(ple4)
+stk=stf(ple4,6)
+
+## Recover stock to the desired SSB in 2006 with a constant Catch strategy
+# Here val can be anything in the ctrl because it is overwritten in the optimisation loop
+ctrl=fwdControl(data.frame(year=2002:2006,val=c(catch(stk)[,"2001"]),quantity="catch"))
+
+xmin=optimize(f, c(100, 100000), tol = 0.0000001, stk=stk, ssbTarget=ssbTarget, ctrl=ctrl, sr=list(model="mean",params=mnRec))
+ctrl=fwdControl(data.frame(year=2002:2006,val=xmin$minimum,quantity="catch"))
+stkC      =fwd(stk,ctrl=ctrl,sr=list(model="mean", params=mnRec))
+
+# Have we reached the target?
+ssbTarget
+ssb(stkC)[,ac(2002:2006)]
+# At what level of constant catch
+computeCatch(stkC)[,ac(2002:2006)]
+# And at what level of F
+fbar(stkC)[,ac(2002:2006)]
+# Update the catch slot
+catch(stkC) = computeCatch(stkC)
+
+plot(stkC[,ac(1957:2006)])
+```
+
+
+```{r25,eval=FALSE,echo=FALSE}
+# Assessment upto and including 2001
+data(ple4)
+stk               =stf(stk,nyear=2)
+
+# set courtship and egg laying in Autumn
+stk@m.spwn[]      =0.66
+stk@harvest.spwn[]=0.66
+
+# assessment is in year 2002, set catch constraint in 2002 and a first guess for F in 2003
+ctrl          =fwdControl(data.frame(year=2002:2003,val=c(85000,.5),quantity=c("catch","f")))
+stk    =fwd(stk, ctrl=ctrl, sr=list(model="mean", params=FLPar(25000)))
+
+# HCR specifies F=0.1 if ssb<100000, F=0.5 if ssb>300000
+# otherwise linear increase as SSB increases
+min.ssb=100000
+max.ssb=300000
+min.f  =0.1
+max.f  =0.5
+
+# slope of HCR
+a.    =(max.f-min.f)/(max.ssb-min.ssb)
+b.    =min.f-a.*min.ssb
+
+# plot of HCR
+plot(c(0.0,min.ssb,max.ssb,max.ssb*2),c(min.f,min.f,max.f,max.f),type="l",ylim=c(0,max.f*1.25),xlim=c(0,max.ssb*2))
+
+## find F through iteration
+t.    =999
+i     =0
+while (abs(ctrl@target[2,"val"]-t.)>10e-6 & i<50)
+   {
+   t.=ctrl@target[2,"val"]  ## save last val of F
+
+   # calculate new F based on SSB last iter
+   ctrl@target[2,"val"]    =a.*c(ssb(stk)[,"2003"])+b.
+   ctrl@trgtArray[2,"val",]=a.*c(ssb(stk)[,"2003"])+b.
+   stk=fwd(stk, ctrl=ctrl, sr=list(model="mean", params=FLPar(25000)))
+
+   # 'av a gander
+   points(c(ssb(stk)[,"2003"]),c(ctrl@target[2,"val"]),cex=1.25,pch=19,col=i)
+   print(c(ssb(stk)[,"2003"]))
+   print(c(ctrl@target[2,"val"]))
+   i=i+1
+   }
+
+# F bounds
+stk      =fwd(stk, ctrl=ctrl, sr=list(model="mean",params=FLPar(25000)))
+plot(FLStocks(stk))
+```
+
+```{r26,eval=FALSE,echo=FALSE}
+#### Create a random variable for M
+albM   =albF1
+m(albM)=propagate(m(albM),100)
+
+mDev=rlnorm(prod(dim(m(albM))),0,0.3)
+mean(mDev)
+var(mDev)^.5
+
+m(albM)=m(albM)*FLQuant(mDev,dimnames=dimnames(m(albM)))
+plot(m(albM))
+
+harvest(albM)=computeHarvest(albM)
+catch(  albM)=computeCatch(  albM,"all")
+
+ctrl=fwdControl(data.frame(year=2008:2027, val=c(fbar(albF1)[,ac(2008:2027)]),quantity="f"))
+albM=fwd(albM,ctrl=ctrl,sr=sr)
+
+plot(FLStocks(albM,albF1))
+```
+
+```{r27,eval=FALSE,echo=FALSE}
+#### Create a random variable for M
+albM1	   =albM
+m(albM1)[1:3,]          =m(albM)[1:3,]*2
+
+harvest(albM1)=computeHarvest(albM1)
+catch(  albM1)=computeCatch(  albM1,"all")
+albM1         =fwd(albM1,ctrl=ctrl,sr=sr)
+
+albM2   =albM
+m(albM2)[,ac(2000:2027)]=m(albM)[,ac(2000:2027)]*2
+
+harvest(albM2)=computeHarvest(albM2)
+catch(  albM2)=computeCatch(  albM2,"all")
+albM2         =fwd(albM2,ctrl=ctrl,sr=sr)
+
+plot(FLStocks(albM,albM1,albM2))
+```
+
+```{r28,eval=FALSE,echo=FALSE}
+#### process error in recruitment
+srDev=FLQuant(rlnorm(20*100,0.0,0.3),dimnames=list(year=2008:2027,iter=1:100))
+sr=fwd(albM,ctrl=ctrl,sr=sr,sr.residuals=srDev)
+plot(sr)
+```
+
+
+```{r29,eval=FALSE,echo=FALSE}
+sr =as.FLSR(alb,model="bevholtSV")
+sr1=fmle(sr,fixed=list(spr0=spr0(alb)))
+
+#### SRR regime shifts
+sr2=fmle(sr,fixed=list(spr0=spr0(alb),v=0.75*params(sr)["v"]))
+
+alb2=fwd( sr3,ctrl=ctrl,sr=sr2,sr.residuals=srDev)
+
+plot(FLStocks(sr,sr2))
+```
+
+

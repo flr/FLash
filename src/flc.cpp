@@ -57,7 +57,9 @@ FLRConstSRR get_sr(int i)
       case 1:  return FLRConst_Mean;      
       case 2:  return FLRConst_BevHolt;    
       case 3:  return FLRConst_Ricker;    
-      case 4:  return FLRConst_SegReg;   
+      case 4:  return FLRConst_SegReg;    
+      case 5:  return FLRConst_Shepherd;   
+      case 6:  return FLRConst_Cushing;   
       }
 
    return FLRConst_Mean;
@@ -66,11 +68,13 @@ FLRConstSRR get_sr(int i)
 int get_sr(FLRConstSRR i)
    {
    switch(i) {
-      case FLRConst_Mean:    return 1;
-      case FLRConst_BevHolt: return 2;
-      case FLRConst_Ricker:  return 3;
-      case FLRConst_SegReg:  return 4;
-      }
+      case FLRConst_Mean:     return 1;
+      case FLRConst_BevHolt:  return 2;
+      case FLRConst_Ricker:   return 3;
+      case FLRConst_SegReg:   return 4;
+      case FLRConst_Shepherd: return 5;
+      case FLRConst_Cushing:  return 6;
+     }
 
    return 1;
    }
@@ -208,12 +212,22 @@ double sr::recruits(int istock, double ssb, int iyr, int iunit, int iseason, int
          returnval = param(istock,1,_yr,iunit,iseason,iarea,iter)*ssb/(ssb+param(istock,2,_yr,iunit,iseason,iarea,iter));
       break;
          
+      case FLRConst_Cushing: 
+         returnval = param(istock,1,_yr,iunit,iseason,iarea,iter)*pow(ssb,param(istock,2,_yr,iunit,iseason,iarea,iter));
+      break;
+    
       case FLRConst_Ricker:
          returnval = param(istock,1,_yr,iunit,iseason,iarea,iter)*ssb*exp(-param(istock,2,_yr,iunit,iseason,iarea,iter)*ssb);
       break;
       
       case FLRConst_Shepherd:
          returnval = param(istock,1,_yr,iunit,iseason,iarea,iter) * ssb/pow(param(istock,2,_yr,iunit,iseason,iarea,iter) + ssb,param(istock,3,_yr,iunit,iseason,iarea,iter));
+      break;
+      
+      case FLRConst_Taylor:
+         returnval = ssb * exp( -param(istock,1,_yr,iunit,iseason,iarea,iter)+
+                                (param(istock,1,_yr,iunit,iseason,iarea,iter)-param(istock,2,_yr,iunit,iseason,iarea,iter)*
+                                (1-pow(ssb/param(istock,3,_yr,iunit,iseason,iarea,iter),param(istock,4,_yr,iunit,iseason,iarea,iter)))));
       break;
         
       case FLRConst_SegReg:

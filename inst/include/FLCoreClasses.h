@@ -33,6 +33,7 @@ typedef enum tagFLRConstSRR
    FLRConst_Ricker          = 3,
    FLRConst_SegReg          = 4,
    FLRConst_Shepherd        = 5,
+   FLRConst_Taylor          = 9,
    FLRConst_Cushing         = 6,
    FLRConst_DerSch          = 7,
    FLRConst_PellaT          = 8,

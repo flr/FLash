@@ -54,12 +54,13 @@ setClass("fwdControl",
 	validity=validFwdControl
   )
 
-if (!isGeneric("fwdControl")) {
-	setGeneric("fwdControl", function(object, ...){
-		value  <-  standardGeneric("fwdControl")
-		value
-	})}
+# if (!isGeneric("fwdControl")) {
+# 	setGeneric("fwdControl", function(object, ...){
+# 		value  <-  standardGeneric("fwdControl")
+# 		value
+# 	})}
 
+setGeneric("fwdControl", function(object, ...)  standardGeneric("fwdControl"))
 setMethod("fwdControl", signature(object="data.frame"),
 fwdControl.<-function(object,effort=NULL,trgtArray=NULL,effArray=NULL,...){
 

@@ -12,14 +12,17 @@ if (!isGeneric("fwd"))
 
 setMethod("fwd", signature(object="FLStock",ctrl="fwdControl"),
 	function(object, ctrl,
-   sr =NULL, sr.residuals=FLQuant(1,dimnames=dimnames(rec(object))), sr.residuals.mult=TRUE,
-               availability=NULL,maxF=2.0)
+           sr          =NULL, 
+           sr.residuals=FLQuant(1,dimnames=dimnames(rec(object))), 
+           sr.residuals.mult=TRUE,
+           availability=NULL,
+           maxF=2.0)
     {      
     if (is(sr,"FLBRP")) sr=list(params=params(sr),model=SRModelName(model(sr)))
     ## make sure slots have correct iters 
     if (is(sr,"FLSR")) nDim=dims(params(sr))$iter  else nDim=1
     if (!is.null(sr.residuals)) nDim=max(nDim, dims(sr.residuals)$iter, na.rm=TRUE)  
-    if (nDim>1) m(object)=propagate(m(object),nDim)
+    if (nDim>1 & dim(m(object))[6]==1) m(object)=propagate(m(object),nDim)
 
     object<-CheckNor1(object)
 
@@ -137,41 +140,77 @@ setMethod("fwd", signature(object="FLStock",ctrl="fwdControl"),
 #     
 #     return(res)})
 
+# source('~/Desktop/flr/git/FLash/R/fwdControl.R')
+# source('~/Desktop/flr/git/FLash/R/FLCoreVarCon.R')
+# source('~/Desktop/flr/git/FLash/R/validityFLSR.R')
+# source('~/Desktop/flr/git/FLash/R/setSRs.R')
+
 setMethod("fwd", signature(object="FLStock", ctrl="missing"),
-    function(object, ctrl,
+   function(object, ctrl,
                sr =NULL, sr.residuals=FLQuant(1,dimnames=dimnames(rec(object))), sr.residuals.mult=TRUE,
                availability=NULL,maxF=2.0,...)
     {
     args=list(...)
-    if (class(args[[1]])=="FLQuant"){
-      ctrl=args[[1]]
-      quantity=names(args)[[1]]}
-  
-    ctrl.=apply(ctrl,1:5,mean,na.rm=TRUE)
-   
-    ctrl.=cbind(quantity=quantity,as.data.frame(ctrl.,drop=T))
-    names(ctrl.)[seq(dim(ctrl.)[2])[names(ctrl.)=="data"]]="val"
+
+    fn<-function(ctrl,quantity){
+      
+      ctrl.=apply(ctrl,1:5,mean,na.rm=TRUE)
+      
+      dat=as.data.frame(ctrl.,drop=T)
+      if ("data.frame"%in%is(dat))
+        ctrl.=cbind(quantity=quantity,dat)
+      else
+        ctrl.=data.frame(quantity=quantity,data=dat,year=dimnames(ctrl.)$year,stringsAsFactors=FALSE)
+      
+      names(ctrl.)[seq(dim(ctrl.)[2])[names(ctrl.)=="data"]]="val"
+      
+      ctrl.=fwdControl(ctrl.)
+      dmns=dimnames(ctrl.@trgtArray)
+      dmns$iter=dimnames(ctrl)$iter
+      
+      ctrl.@trgtArray=array(c(ctrl),dim=unlist(lapply(dmns,length)),dimnames=dmns)
+      ctrl.@trgtArray[,c("min","max"),][]=NA
+      ctrl.
+      }
     
-    ctrl.=fwdControl(ctrl.)
-    dmns=dimnames(ctrl.@trgtArray)
-    dmns$iter=dimnames(ctrl)$iter
- 
-    ctrl.@trgtArray=array(c(ctrl),dim=unlist(lapply(dmns,length)),dimnames=dmns)
-    ctrl.@trgtArray[,c("min","max"),][]=NA
+   if (class(args[[1]])=="FLQuants"){
+         its=laply(args[[1]], function(x) dimnames(x)$iter)
+   }else{ its=dimnames(args[[1]])$iter}
     
-    nits=max(length(dmns$iter),  length(dimnames(sr.residuals)$iter))   
-         
+    nits=as.numeric(max(its,  length(dimnames(sr.residuals)$iter)))
+
     if (nits>1 & dims(object)$iter==1){
-       stock.n(object)=propagate(stock.n(object),nits)
-       if (length(dimnames(sr.residuals)$iter)==1)
-         sr.residuals=propagate(sr.residuals,nits)
-       }
-       
-    res=fwd(object,ctrl=ctrl.,
-            sr=sr,sr.residuals,sr.residuals.mult=sr.residuals.mult,
-               availability=availability,maxF=maxF)  
-    
-    return(res)})
+      
+      if(dim(stock.n(object))[6]==1) 
+          stock.n(object)=propagate(stock.n(object),nits)
+      
+      if (length(dimnames(sr.residuals)$iter)==1)
+        sr.residuals=propagate(sr.residuals,nits)
+    }
+   
+
+   if (class(args[[1]])=="FLQuant"){
+      ctrl    =args[[1]]
+      quantity=names(args)[[1]]
+     
+      ctrl.=fn(ctrl,quantity) 
+
+      res=fwd(object,ctrl=ctrl.,
+              sr=sr,sr.residuals     =sr.residuals,
+                    sr.residuals.mult=sr.residuals.mult,
+              availability=availability,maxF=maxF)  
+      
+    }else if (class(args[[1]])=="FLQuants"){
+      
+      res=FLStocks(llply(args[[1]],function(x)  {
+        ctrl.=fn(x,names(args)[1]) 
+        fwd(object,ctrl=ctrl.,
+             sr=sr,sr.residuals,sr.residuals.mult=sr.residuals.mult,
+             availability=availability,maxF=maxF)  
+        }))   
+    }
+     
+  return(res)})
 
 setMethod("fwd", signature(object="FLStock", ctrl="FLQuants"),
     function(object, ctrl,
@@ -410,4 +449,3 @@ setMethod("fwd", signature(object="FLStock", ctrl="FLQuant"),
 # #
 # #   invisible(res)
 # #   })
-# #
