@@ -168,8 +168,11 @@ setMethod("fwd", signature(object="FLStock", ctrl="missing"),
       dmns=dimnames(ctrl.@trgtArray)
       dmns$iter=dimnames(ctrl)$iter
       
-      ctrl.@trgtArray=array(c(ctrl),dim=unlist(lapply(dmns,length)),dimnames=dmns)
+      ctrl.@trgtArray=array(as.numeric(NA),dim=unlist(lapply(dmns,length)),dimnames=dmns)
+      dmns[[2]]="val"
+      ctrl.@trgtArray[,"val",][]=array(c(ctrl),dim=unlist(lapply(dmns,length)),dimnames=dmns)
       ctrl.@trgtArray[,c("min","max"),][]=NA
+      
       ctrl.
       }
     
@@ -229,9 +232,10 @@ setMethod("fwd", signature(object="FLStock", ctrl="FLQuants"),
 
 setMethod("fwd", signature(object="FLStock", ctrl="FLQuant"),
     function(object, ctrl,quantity,
-               sr =NULL, sr.residuals=FLQuant(1,dimnames=dimnames(rec(object))), sr.residuals.mult=TRUE,
+               sr =NULL, sr.residuals=FLQuant(1,dimnames=dimnames(rec(object))), 
+               sr.residuals.mult=TRUE,
                availability=NULL,maxF=2.0,...)
-    {    
+    { 
     ctrl.=apply(ctrl,1:5,mean,na.rm=TRUE)
     ctrl.=cbind(quantity=quantity,as.data.frame(ctrl.,drop=T))
     names(ctrl.)[seq(dim(ctrl.)[2])[names(ctrl.)=="data"]]="val"
