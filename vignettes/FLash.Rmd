@@ -12,10 +12,16 @@ output: rmarkdown::tufte_handout
 ```{r knitr_init, echo=FALSE, results="asis"}
 library(knitr)
 
+#output:
+#  rmdformats::html_clean:
+#    fig_width: 6
+#    fig_height: 6
+#    highlight: pygments
+
 ## Global options
 opts_chunk$set(echo  =TRUE,
                eval  =TRUE,
-               cache =FALSE,
+               cache =!FALSE,
                cache.path="cache/",
                prompt=FALSE,
                comment=NA,
@@ -45,7 +51,7 @@ library(ggplotFL)
 theme_set(theme_bw(10))
 ```
 
-For the examples we will use the ple4 FLSock object.
+For the examples we will use the ple4 FLStock object.
 
 ```{r}
 data(ple4)
@@ -285,7 +291,7 @@ stk=ple4
 ```
 
 ```{r}
-source('~/Desktop/flr/git/FLash/R/hcr.R')
+#source('~/Desktop/flr/git/FLash/R/hcr.R')
 
 hvt=hcr(stk,refpts(eql)["msy"])
 hvt
