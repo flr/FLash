@@ -4,13 +4,14 @@ Version: 2.5.11
 Date: 2017-11-09
 Authors@R: c(
   person("Laurence T.", "Kell", email = "laurie@kell.es", role = c("cre", "aut")))
-Description: Projecting the future dynamics of fish stocks is an essential part of fisheries scientce and management advice. The FLash package carries out forecasts of fish stocks (FLStock objects) according to a defined table of targets and limits (fwdControl) and applying and specified stock-recruitment relationship.
+Description: Projecting the future dynamics of fish stocks is an essential part of fisheries science and management advice. The FLash package carries out forecasts of fish stocks (FLStock objects) according to a defined table of targets and limits (fwdControl) and applying and specified stock-recruitment relationship.
 Depends:
   R(>= 3.4.0),
   FLCore(>= 2.6.5),
   methods
 Suggests:
-  knitr
+  knitr,
+  rmarkdown
 Additional_repositories: http://flr-project.org/R
 VignetteBuilder: knitr
 Collate:
