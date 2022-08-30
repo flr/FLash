@@ -1,7 +1,7 @@
 
 # FLash
 - Version: 2.5.11
-- Date: 2017-11-09
+- Date: 
 - Author: Laurie Kell <laurie@seaplusplus.co.uk>
 - Maintainer: Laurie Kell <laurie@seaplusplus.co.uk>
 - Repository: <https://github.com/flr/FLash/>
@@ -29,7 +29,7 @@ or download from the [FLash releases page](https://github.com/flr/FLash/releases
 - [All releases](https://github.com/flr/FLash/releases/)
 
 ## License
-Copyright (c) 2004-2017 The FLR Team. Released under the [GPL v2](http://www.gnu.org/licenses/gpl-2.0.html).
+Copyright (c) 2004-2022 The FLR Team. Released under the [GPL v2](http://www.gnu.org/licenses/gpl-2.0.html).
 
 ## Contact
 You are welcome to:

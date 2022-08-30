@@ -1,6 +1,7 @@
-pandoc: 1.16.0.2
-pkgdown: 1.1.0
+pandoc: 2.7.3
+pkgdown: 2.0.6
 pkgdown_sha: ~
 articles:
   FLash: FLash.html
+last_built: 2022-08-30T19:14Z
 
