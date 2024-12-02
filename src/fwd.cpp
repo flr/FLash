@@ -614,7 +614,7 @@ bool control::Init(SEXP xCtrl, SEXP xAry, int niters)
     SEXP dims;
 
     // Get target object
-    if (!isMatrix(xCtrl) || !isNumeric(xCtrl))
+    if (!Rf_isMatrix(xCtrl) || !Rf_isNumeric(xCtrl))
       return false;
 
     dims = GET_DIM(xCtrl);
@@ -776,11 +776,11 @@ bool target::Init(SEXP xTrgt, SEXP xAry, int niters)
     SEXP TrgtDims;
 
     // Get Target object
-    if (!isArray(xTrgt) || !isNumeric(xTrgt))
+    if (!Rf_isArray(xTrgt) || !Rf_isNumeric(xTrgt))
       return false;
 
     // Get Array object
-    if (!isArray(xAry) || !isNumeric(xAry))
+    if (!Rf_isArray(xAry) || !Rf_isNumeric(xAry))
       return false;
 
     //Target data frame

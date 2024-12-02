@@ -89,7 +89,7 @@ extern "C" SEXPDLLExport fwd_adolc_FLBiol(SEXP xBiols, SEXP xFleets, SEXP xTrgt,
 
    fwd.run(xTrgt, xCtrl, xAryTrgt, xAryCtrl, xYrs);
 
-   PROTECT(ReturnVal = allocVector(VECSXP,6));
+   PROTECT(ReturnVal = Rf_allocVector(VECSXP,6));
 
     //SET_VECTOR_ELT(ReturnVal, 0, fwd.ReturnBiol());
     //SET_VECTOR_ELT(ReturnVal, 1, fwd.ReturnFleet());
@@ -118,7 +118,7 @@ extern "C" SEXPDLLExport _fwd_adolc_FLStock(SEXP xFLStock,SEXP xTrgt,SEXP xAry,S
 
     //fwd.run(xTrgt, xCtrl);
 
-    PROTECT(ReturnVal = allocVector(VECSXP,fwd.nstock()));
+    PROTECT(ReturnVal = Rf_allocVector(VECSXP,fwd.nstock()));
 
     for (int i=0; i<fwd.nstock(); i++)
        SET_VECTOR_ELT(ReturnVal, i, fwd.ReturnStock(i+1));
@@ -144,21 +144,21 @@ extern "C" SEXPDLLExport fwd_adolc_FLBiols(SEXP xBiols, SEXP xFleets, SEXP xTrgt
 	
    fwd.run(xTrgt, xAryTrgt, xCtrl, xAryCtrl, xYrs);
 
-   PROTECT(ReturnVal = allocVector(VECSXP,6));
+   PROTECT(ReturnVal = Rf_allocVector(VECSXP,6));
 
    //SET_VECTOR_ELT(ReturnVal, 0, fwd.ReturnBiol());
    //SET_VECTOR_ELT(ReturnVal, 1, fwd.ReturnFleet());
    //SET_VECTOR_ELT(ReturnVal, 0, fwd.ReturnStock());
 
-   PROTECT(ReturnVal = allocVector(VECSXP,6));
+   PROTECT(ReturnVal = Rf_allocVector(VECSXP,6));
   
    SEXP catch_n = R_NilValue,
         f       = R_NilValue,
         n       = R_NilValue;
   
-   PROTECT(catch_n = allocVector(VECSXP,2));
-   PROTECT(f       = allocVector(VECSXP,2));
-   PROTECT(n       = allocVector(VECSXP,2));
+   PROTECT(catch_n = Rf_allocVector(VECSXP,2));
+   PROTECT(f       = Rf_allocVector(VECSXP,2));
+   PROTECT(n       = Rf_allocVector(VECSXP,2));
 
    SET_VECTOR_ELT(ReturnVal, 0, fwd.landings_n.Return(1,1,1));
    SET_VECTOR_ELT(ReturnVal, 1, fwd.discards_n.Return(1,1,1));
@@ -195,7 +195,7 @@ extern "C" SEXPDLLExport TestFLBiolFLFleet(SEXP xBiol, SEXP xFleet, SEXP xDim)
    
    bf.InitBiolFleet(xBiol, xFleet, xDim);
 
-   PROTECT(ReturnVal = allocVector(VECSXP,2));
+   PROTECT(ReturnVal = Rf_allocVector(VECSXP,2));
 
    SET_VECTOR_ELT(ReturnVal, 0, bf.ReturnBiol());
    SET_VECTOR_ELT(ReturnVal, 1, bf.ReturnFleet());

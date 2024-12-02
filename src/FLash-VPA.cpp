@@ -32,10 +32,10 @@ bool FLashVPA::isFLashVPA(SEXP x)
 void FLashVPA::Init(SEXP x)
    {
 
-   SEXP      range = GET_SLOT(x, install("range"));
+   SEXP      range = GET_SLOT(x, Rf_install("range"));
    SEXP RangeNames = GET_NAMES(range);
 	  
-   int n = length(RangeNames);
+   int n = Rf_length(RangeNames);
 
    minage   = maxage = 
    minyr    = maxyr  = 
@@ -68,10 +68,10 @@ void FLashVPA::Init(SEXP x)
            maxyr    = (short)(REAL(range)[i]);
       }
 
-   Catch.Init(GET_SLOT(x, install("catch.n")));        
-   M.Init(    GET_SLOT(x, install("m")));               
-   F.Init(    GET_SLOT(x, install("harvest")));               
-   N.Init(    GET_SLOT(x, install("stock.n")));               
+   Catch.Init(GET_SLOT(x, Rf_install("catch.n")));        
+   M.Init(    GET_SLOT(x, Rf_install("m")));               
+   F.Init(    GET_SLOT(x, Rf_install("harvest")));               
+   N.Init(    GET_SLOT(x, Rf_install("stock.n")));               
    
    niters = M.niters();
 
@@ -98,9 +98,9 @@ SEXP FLashVPA::Return(void)
    REAL(Range)[3] = minyr;
    REAL(Range)[4] = maxyr;
        
-   SET_SLOT(x, install("stock.n"), N_ad.Return());
-   SET_SLOT(x, install("harvest"), F_ad.Return());
-   SET_SLOT(x, install("catch.n"), Catch_ad.Return());
+   SET_SLOT(x, Rf_install("stock.n"), N_ad.Return());
+   SET_SLOT(x, Rf_install("harvest"), F_ad.Return());
+   SET_SLOT(x, Rf_install("catch.n"), Catch_ad.Return());
    
    UNPROTECT(2);
 
@@ -139,8 +139,8 @@ bool FLashVPA::SepVPA(SEXP xControl, SEXP xRefHarvest)
         H[iage]         =new adouble[(maxyr -minyr +1)] - minyr;
         }
 
-      int    refage = (short) INTEGER(GET_SLOT(xControl,install("sep.age")))[0];
-      adouble refsep = _max(REAL(GET_SLOT(xControl,install("sep.sel")))[0],0.0);
+      int    refage = (short) INTEGER(GET_SLOT(xControl,Rf_install("sep.age")))[0];
+      adouble refsep = _max(REAL(GET_SLOT(xControl,Rf_install("sep.sel")))[0],0.0);
       adouble refF   = _max(REAL(xRefHarvest)[0],0.0);
 
       Selectivity[refage] = refsep;

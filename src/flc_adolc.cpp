@@ -68,7 +68,7 @@ SEXP FLQuant_adolc::Return(void)
 
     //Create array for slot    
     //Set dimensions of array
-    PROTECT(dim     = allocVector(INTSXP, 6));       
+    PROTECT(dim     = Rf_allocVector(INTSXP, 6));       
     INTEGER(dim)[0] = maxquant()-minquant() +1;
     INTEGER(dim)[1] = maxyr()   -minyr()    +1;
     INTEGER(dim)[2] = nunits(); 
@@ -80,26 +80,26 @@ SEXP FLQuant_adolc::Return(void)
     PROTECT(v = Rf_allocArray(REALSXP, dim)); 
     
     //Create dimension names
-    PROTECT(dimnames = allocVector(VECSXP, 6));
+    PROTECT(dimnames = Rf_allocVector(VECSXP, 6));
     
-    PROTECT(d1 = allocVector(INTSXP, maxquant()-minquant() +1));
+    PROTECT(d1 = Rf_allocVector(INTSXP, maxquant()-minquant() +1));
     for (iAge=minquant(),i=0; iAge<=maxquant(); iAge++, i++)
         INTEGER(d1)[i] = iAge; 
     SET_VECTOR_ELT(dimnames, 0, d1);
     
-    PROTECT(d2 = allocVector(INTSXP, maxyr()-minyr()+1));
+    PROTECT(d2 = Rf_allocVector(INTSXP, maxyr()-minyr()+1));
     for (iYear=minyr(), i=0; iYear<=maxyr(); iYear++, i++)
         INTEGER(d2)[i] = iYear; 
     SET_VECTOR_ELT(dimnames, 1, d2);
      
     if (nunits()==1)
        {
-       PROTECT(d3 = allocVector(STRSXP, nunits()));
-       SET_STRING_ELT(d3, 0, mkChar("unique"));
+       PROTECT(d3 = Rf_allocVector(STRSXP, nunits()));
+       SET_STRING_ELT(d3, 0, Rf_mkChar("unique"));
        }
     else
        {
-       PROTECT(d3 = allocVector(INTSXP, nunits()));
+       PROTECT(d3 = Rf_allocVector(INTSXP, nunits()));
        for (iUnit=1, i=0; iUnit<=nunits(); iUnit++, i++)
           INTEGER(d3)[i] = iUnit; 
        }
@@ -107,12 +107,12 @@ SEXP FLQuant_adolc::Return(void)
        
     if (nseasons()==1)
        {
-       PROTECT(d4 = allocVector(STRSXP, nseasons()));
-       SET_STRING_ELT(d4, 0, mkChar("all"));
+       PROTECT(d4 = Rf_allocVector(STRSXP, nseasons()));
+       SET_STRING_ELT(d4, 0, Rf_mkChar("all"));
        }
     else
        {
-       PROTECT(d4 = allocVector(INTSXP, nseasons()));
+       PROTECT(d4 = Rf_allocVector(INTSXP, nseasons()));
        for (iSeason=1, i=0; iSeason<=nseasons(); iSeason++, i++)
           INTEGER(d4)[i] = iSeason; 
        }
@@ -121,33 +121,33 @@ SEXP FLQuant_adolc::Return(void)
 
     if (nareas()==1)
        {
-       PROTECT(d5 = allocVector(STRSXP, nareas()));
-       SET_STRING_ELT(d5, 0, mkChar("unique"));
+       PROTECT(d5 = Rf_allocVector(STRSXP, nareas()));
+       SET_STRING_ELT(d5, 0, Rf_mkChar("unique"));
        }
     else
        {
-       PROTECT(d5 = allocVector(INTSXP, nareas()));
+       PROTECT(d5 = Rf_allocVector(INTSXP, nareas()));
        for (iArea=1, i=0; iArea<=nareas(); iArea++, i++)
           INTEGER(d5)[i] = iArea; 
        }
     SET_VECTOR_ELT(dimnames, 4, d5);
 
-    PROTECT(d6 = allocVector(INTSXP, niters()));
+    PROTECT(d6 = Rf_allocVector(INTSXP, niters()));
     for (iIter=1, i=0; iIter<=niters(); iIter++, i++)
         INTEGER(d6)[i] = iIter; 
     SET_VECTOR_ELT(dimnames, 5, d6);
     
     //Create names for dimensions
-    PROTECT(names = allocVector(STRSXP, 6));
-    SET_STRING_ELT(names, 0, mkChar("age"));
-    SET_STRING_ELT(names, 1, mkChar("year"));
-    SET_STRING_ELT(names, 2, mkChar("unit"));
-    SET_STRING_ELT(names, 3, mkChar("season"));
-    SET_STRING_ELT(names, 4, mkChar("area"));
-    SET_STRING_ELT(names, 5, mkChar("iter")); 
+    PROTECT(names = Rf_allocVector(STRSXP, 6));
+    SET_STRING_ELT(names, 0, Rf_mkChar("age"));
+    SET_STRING_ELT(names, 1, Rf_mkChar("year"));
+    SET_STRING_ELT(names, 2, Rf_mkChar("unit"));
+    SET_STRING_ELT(names, 3, Rf_mkChar("season"));
+    SET_STRING_ELT(names, 4, Rf_mkChar("area"));
+    SET_STRING_ELT(names, 5, Rf_mkChar("iter")); 
 
-    setAttrib(dimnames, R_NamesSymbol, names);
-    setAttrib(v, R_DimNamesSymbol, dimnames);
+    Rf_setAttrib(dimnames, R_NamesSymbol, names);
+    Rf_setAttrib(v, R_DimNamesSymbol, dimnames);
    
     //Set data
     i=0;
@@ -160,7 +160,7 @@ SEXP FLQuant_adolc::Return(void)
 			      			    REAL(v)[i++] = (double) data[FLQuant_adolc::i(iAge,iYear,iUnit,iSeason,iArea,iIter)].value(); 
                    
     //Set slot
-    Quant = R_do_slot_assign(Quant, install(".Data"), v);
+    Quant = R_do_slot_assign(Quant, Rf_install(".Data"), v);
 
     UNPROTECT(11);
     

@@ -87,7 +87,7 @@ sr::sr(int _nstock)
 
 bool sr::Init(int _nstock, SEXP xyrs)      
 	{
-   if (!isNumeric(xyrs)) 
+   if (!Rf_isNumeric(xyrs)) 
       return false;
  
    int _minyr = (int)REAL(xyrs)[0], 
@@ -143,7 +143,7 @@ bool sr::Init(int istock, SEXP xmodel, SEXP xparam, SEXP xresiduals, SEXP xmult)
    
    t= PROTECT(VECTOR_ELT(xmodel, istock-1));
 
-   if (!isNumeric(t)){
+   if (!Rf_isNumeric(t)){
       UNPROTECT(2);
       return false;} 
    
@@ -377,32 +377,32 @@ void flc::InitStock(int ifleet, int imetier, int istock, SEXP x)
    if (imetier<1 || imetier>nmetier()) return;
    if (istock <1 || istock >nstock() ) return;
    
-   fl_minage[ ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[0];
-   fl_maxage[ ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[1];
-   fl_plusgrp[ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[2];
-   fl_minyr[  ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[3];
-   fl_maxyr[  ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[4];
+   fl_minage[ ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[0];
+   fl_maxage[ ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[1];
+   fl_plusgrp[ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[2];
+   fl_minyr[  ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[3];
+   fl_maxyr[  ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[4];
 
-   n.Init(       istock, GET_SLOT(x, install("stock.n"))); 
-   stock_wt.Init(istock, GET_SLOT(x, install("stock.wt"))); 
-   m.Init(       istock, GET_SLOT(x, install("m"))); 
-   fec.Init(     istock, GET_SLOT(x, install("mat"))); 
-   f.Init(       istock, GET_SLOT(x, install("harvest")));
-   f_spwn.Init(  istock, GET_SLOT(x, install("harvest.spwn")));
-   m_spwn.Init(  istock, GET_SLOT(x, install("m.spwn")));
+   n.Init(       istock, GET_SLOT(x, Rf_install("stock.n"))); 
+   stock_wt.Init(istock, GET_SLOT(x, Rf_install("stock.wt"))); 
+   m.Init(       istock, GET_SLOT(x, Rf_install("m"))); 
+   fec.Init(     istock, GET_SLOT(x, Rf_install("mat"))); 
+   f.Init(       istock, GET_SLOT(x, Rf_install("harvest")));
+   f_spwn.Init(  istock, GET_SLOT(x, Rf_install("harvest.spwn")));
+   m_spwn.Init(  istock, GET_SLOT(x, Rf_install("m.spwn")));
 
-   catch_.Init(      ifleet, imetier, istock, GET_SLOT(x, install("catch")));  
-   catch_n.Init(     ifleet, imetier, istock, GET_SLOT(x, install("catch.n")));   
-   catch_wt.Init(    ifleet, imetier, istock, GET_SLOT(x, install("catch.wt")));   
-   catch_q.Init(     ifleet, imetier, istock, GET_SLOT(x, install("stock.n")));   
-   landings.Init(    ifleet, imetier, istock, GET_SLOT(x, install("landings")));   
-   landings_n.Init(  ifleet, imetier, istock, GET_SLOT(x, install("landings.n")));   
-   landings_wt.Init( ifleet, imetier, istock, GET_SLOT(x, install("landings.wt")));   
-   discards.Init(    ifleet, imetier, istock, GET_SLOT(x, install("discards")));   
-   discards_n.Init(  ifleet, imetier, istock, GET_SLOT(x, install("discards.n")));   
-   discards_wt.Init( ifleet, imetier, istock, GET_SLOT(x, install("discards.wt")));   
+   catch_.Init(      ifleet, imetier, istock, GET_SLOT(x, Rf_install("catch")));  
+   catch_n.Init(     ifleet, imetier, istock, GET_SLOT(x, Rf_install("catch.n")));   
+   catch_wt.Init(    ifleet, imetier, istock, GET_SLOT(x, Rf_install("catch.wt")));   
+   catch_q.Init(     ifleet, imetier, istock, GET_SLOT(x, Rf_install("stock.n")));   
+   landings.Init(    ifleet, imetier, istock, GET_SLOT(x, Rf_install("landings")));   
+   landings_n.Init(  ifleet, imetier, istock, GET_SLOT(x, Rf_install("landings.n")));   
+   landings_wt.Init( ifleet, imetier, istock, GET_SLOT(x, Rf_install("landings.wt")));   
+   discards.Init(    ifleet, imetier, istock, GET_SLOT(x, Rf_install("discards")));   
+   discards_n.Init(  ifleet, imetier, istock, GET_SLOT(x, Rf_install("discards.n")));   
+   discards_wt.Init( ifleet, imetier, istock, GET_SLOT(x, Rf_install("discards.wt")));   
 
-   catch_sel.Init(   ifleet, imetier, istock, GET_SLOT(x, install("harvest")));
+   catch_sel.Init(   ifleet, imetier, istock, GET_SLOT(x, Rf_install("harvest")));
 
    //check other dims and then set 'em   
    fl_nunits[  ifleet][imetier][istock] = 1;
@@ -454,15 +454,15 @@ bool flc::InitSR(int istock, SEXP xmodel, SEXP  xparam, SEXP  xresiduals, SEXP x
 
    SEXP names;
     
-   PROTECT(names = allocVector(STRSXP, 7));
-   SET_STRING_ELT(names, 0, mkChar("min"));
-   SET_STRING_ELT(names, 1, mkChar("max"));
-   SET_STRING_ELT(names, 2, mkChar("plusgroup"));
-   SET_STRING_ELT(names, 3, mkChar("minyear"));
-   SET_STRING_ELT(names, 4, mkChar("maxyear"));
-   SET_STRING_ELT(names, 5, mkChar("minfbar"));
-   SET_STRING_ELT(names, 6, mkChar("maxfbar"));
-   setAttrib(Range, R_NamesSymbol, names);
+   PROTECT(names = Rf_allocVector(STRSXP, 7));
+   SET_STRING_ELT(names, 0, Rf_mkChar("min"));
+   SET_STRING_ELT(names, 1, Rf_mkChar("max"));
+   SET_STRING_ELT(names, 2, Rf_mkChar("plusgroup"));
+   SET_STRING_ELT(names, 3, Rf_mkChar("minyear"));
+   SET_STRING_ELT(names, 4, Rf_mkChar("maxyear"));
+   SET_STRING_ELT(names, 5, Rf_mkChar("minfbar"));
+   SET_STRING_ELT(names, 6, Rf_mkChar("maxfbar"));
+   Rf_setAttrib(Range, R_NamesSymbol, names);
    
    return Range;
    }
@@ -483,14 +483,14 @@ SEXP flc::ReturnRangeBiol(int istock)
 
    SEXP names;
     
-   PROTECT(names = allocVector(STRSXP, 5));
-   SET_STRING_ELT(names, 0, mkChar("min"));
-   SET_STRING_ELT(names, 1, mkChar("max"));
-   SET_STRING_ELT(names, 2, mkChar("plusgroup"));
-   SET_STRING_ELT(names, 3, mkChar("minyear"));
-   SET_STRING_ELT(names, 4, mkChar("maxyear"));
+   PROTECT(names = Rf_allocVector(STRSXP, 5));
+   SET_STRING_ELT(names, 0, Rf_mkChar("min"));
+   SET_STRING_ELT(names, 1, Rf_mkChar("max"));
+   SET_STRING_ELT(names, 2, Rf_mkChar("plusgroup"));
+   SET_STRING_ELT(names, 3, Rf_mkChar("minyear"));
+   SET_STRING_ELT(names, 4, Rf_mkChar("maxyear"));
 
-   setAttrib(Range, R_NamesSymbol, names);
+   Rf_setAttrib(Range, R_NamesSymbol, names);
    
    return Range;
    }
@@ -504,15 +504,15 @@ SEXP flc::ReturnStock(int istock)
    
    ReturnObj  = PROTECT(NEW_OBJECT(MAKE_CLASS("FLStock")));
    
-   SET_SLOT(ReturnObj, install("range"),        ReturnRange(istock));
+   SET_SLOT(ReturnObj, Rf_install("range"),        ReturnRange(istock));
 
-   SET_SLOT(ReturnObj, install("stock.n"),      n.Return(           istock));
-   SET_SLOT(ReturnObj, install("stock.wt"),     stock_wt.Return(    istock));
-   SET_SLOT(ReturnObj, install("m"),            m.Return(           istock));
-   SET_SLOT(ReturnObj, install("mat"),          fec.Return(         istock));
-   SET_SLOT(ReturnObj, install("harvest"),      f.Return(           istock));
-   SET_SLOT(ReturnObj, install("harvest.spwn"), f_spwn.Return(      istock));
-   SET_SLOT(ReturnObj, install("m.spwn"),       m_spwn.Return(      istock));
+   SET_SLOT(ReturnObj, Rf_install("stock.n"),      n.Return(           istock));
+   SET_SLOT(ReturnObj, Rf_install("stock.wt"),     stock_wt.Return(    istock));
+   SET_SLOT(ReturnObj, Rf_install("m"),            m.Return(           istock));
+   SET_SLOT(ReturnObj, Rf_install("mat"),          fec.Return(         istock));
+   SET_SLOT(ReturnObj, Rf_install("harvest"),      f.Return(           istock));
+   SET_SLOT(ReturnObj, Rf_install("harvest.spwn"), f_spwn.Return(      istock));
+   SET_SLOT(ReturnObj, Rf_install("m.spwn"),       m_spwn.Return(      istock));
  
    FLQuant flq_stock(   1, 1, minyr(), maxyr(), nunits(), nareas(), nseasons(), niters(), 0.0);
    FLQuant flq_catch(   1, 1, minyr(), maxyr(), nunits(), nareas(), nseasons(), niters(), 0.0);
@@ -549,16 +549,16 @@ SEXP flc::ReturnStock(int istock)
                      }
                   }
 
-   SET_SLOT(ReturnObj, install("stock"),        flq_catch.Return());
-   SET_SLOT(ReturnObj, install("catch"),        flq_catch.Return());
-   SET_SLOT(ReturnObj, install("catch.n"),      flq_catch_n.Return());
-   SET_SLOT(ReturnObj, install("catch.wt"),     flq_catch_wt.Return());
-   SET_SLOT(ReturnObj, install("landings"),     flq_landings.Return());
-   SET_SLOT(ReturnObj, install("landings.n"),   flq_landings_n.Return());
-   SET_SLOT(ReturnObj, install("landings.wt"),  flq_landings_wt.Return());
-   SET_SLOT(ReturnObj, install("discards"),     flq_discards.Return());
-   SET_SLOT(ReturnObj, install("discards.n"),   flq_discards_n.Return());
-   SET_SLOT(ReturnObj, install("discards.wt"),  flq_discards_wt.Return());
+   SET_SLOT(ReturnObj, Rf_install("stock"),        flq_catch.Return());
+   SET_SLOT(ReturnObj, Rf_install("catch"),        flq_catch.Return());
+   SET_SLOT(ReturnObj, Rf_install("catch.n"),      flq_catch_n.Return());
+   SET_SLOT(ReturnObj, Rf_install("catch.wt"),     flq_catch_wt.Return());
+   SET_SLOT(ReturnObj, Rf_install("landings"),     flq_landings.Return());
+   SET_SLOT(ReturnObj, Rf_install("landings.n"),   flq_landings_n.Return());
+   SET_SLOT(ReturnObj, Rf_install("landings.wt"),  flq_landings_wt.Return());
+   SET_SLOT(ReturnObj, Rf_install("discards"),     flq_discards.Return());
+   SET_SLOT(ReturnObj, Rf_install("discards.n"),   flq_discards_n.Return());
+   SET_SLOT(ReturnObj, Rf_install("discards.wt"),  flq_discards_wt.Return());
   
    UNPROTECT(2);
 
@@ -574,13 +574,13 @@ SEXP flc::ReturnBiol(int istock)
    
    ReturnObj = PROTECT(NEW_OBJECT(MAKE_CLASS("FLBiol")));
    
-   SET_SLOT(ReturnObj, install("range"),        ReturnRangeBiol(istock));
+   SET_SLOT(ReturnObj, Rf_install("range"),        ReturnRangeBiol(istock));
 
-   SET_SLOT(ReturnObj, install("n"),    n.Return(           istock));
-   SET_SLOT(ReturnObj, install("wt"),   stock_wt.Return(    istock));
-   SET_SLOT(ReturnObj, install("m"),    m.Return(           istock));
-   SET_SLOT(ReturnObj, install("fec"),  fec.Return(         istock));
-   SET_SLOT(ReturnObj, install("spwn"), m_spwn.Return(      istock)); 
+   SET_SLOT(ReturnObj, Rf_install("n"),    n.Return(           istock));
+   SET_SLOT(ReturnObj, Rf_install("wt"),   stock_wt.Return(    istock));
+   SET_SLOT(ReturnObj, Rf_install("m"),    m.Return(           istock));
+   SET_SLOT(ReturnObj, Rf_install("fec"),  fec.Return(         istock));
+   SET_SLOT(ReturnObj, Rf_install("spwn"), m_spwn.Return(      istock)); 
   
    UNPROTECT(2);
 
@@ -604,55 +604,55 @@ SEXP flc::ReturnFleet(int ifleet)
    REAL(Range)[3] = minyr();
    REAL(Range)[4] = maxyr();
    
-   SET_SLOT(fleet, install("range"),      Range);         
-   SET_SLOT(fleet, install("effort"),     effort.Return(ifleet));         
-   SET_SLOT(fleet, install("capacity"),   capacity.Return(ifleet));         
-   SET_SLOT(fleet, install("crewshare"),  crewshare.Return(ifleet));         
-   SET_SLOT(fleet, install("fcost"),      fcost.Return(ifleet));         
+   SET_SLOT(fleet, Rf_install("range"),      Range);         
+   SET_SLOT(fleet, Rf_install("effort"),     effort.Return(ifleet));         
+   SET_SLOT(fleet, Rf_install("capacity"),   capacity.Return(ifleet));         
+   SET_SLOT(fleet, Rf_install("crewshare"),  crewshare.Return(ifleet));         
+   SET_SLOT(fleet, Rf_install("fcost"),      fcost.Return(ifleet));         
    
    SEXP metiers      = NEW_OBJECT(MAKE_CLASS("FLMetiers"));
-   SEXP metiers_data = allocVector(VECSXP, nmetier());        
+   SEXP metiers_data = Rf_allocVector(VECSXP, nmetier());        
    
    for (int i=1; i<=nmetier(); i++)
       {
       SEXP metier = NEW_OBJECT(MAKE_CLASS("FLMetier"));
 
-      SET_SLOT(metier, install("effshare"), effshare.Return(ifleet,i));         
-      SET_SLOT(metier, install("vcost"),    vcost.Return(ifleet,i));         
+      SET_SLOT(metier, Rf_install("effshare"), effshare.Return(ifleet,i));         
+      SET_SLOT(metier, Rf_install("vcost"),    vcost.Return(ifleet,i));         
  
       SEXP catches    = NEW_OBJECT(MAKE_CLASS("FLCatches"));
-      SEXP catch_data = allocVector(VECSXP, nstock());        
+      SEXP catch_data = Rf_allocVector(VECSXP, nstock());        
    
       for (int j=1; j<=nstock(); j++)
          {
          SEXP _catch = NEW_OBJECT(MAKE_CLASS("FLCatch"));
       
-         //SET_SLOT(_catch, install("catch"),        catch_.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("catch.n"),      catch_n.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("catch.wt"),     catch_wt.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("catch.sel"),    catch_sel.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("catch.q"),      catch_q.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("landings"),     landings.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("landings.n"),   landings_n.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("landings.wt"),  landings_wt.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("landings.sel"), landings_sel.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("discards"),     discards.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("discards.n"),   discards_n.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("discards.wt"),  discards_wt.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("discards.sel"), discards_sel.Return(ifleet,i,j));
-         //SET_SLOT(_catch, install("price"),        price.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("catch"),        catch_.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("catch.n"),      catch_n.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("catch.wt"),     catch_wt.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("catch.sel"),    catch_sel.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("catch.q"),      catch_q.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("landings"),     landings.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("landings.n"),   landings_n.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("landings.wt"),  landings_wt.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("landings.sel"), landings_sel.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("discards"),     discards.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("discards.n"),   discards_n.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("discards.wt"),  discards_wt.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("discards.sel"), discards_sel.Return(ifleet,i,j));
+         //SET_SLOT(_catch, Rf_install("price"),        price.Return(ifleet,i,j));
 
          SET_VECTOR_ELT(catch_data, j-1, _catch); 
          }
-      catches = R_do_slot_assign(catches, install(".Data"), catch_data);
+      catches = R_do_slot_assign(catches, Rf_install(".Data"), catch_data);
     
-      SET_SLOT(metier, install("catches"), catches);
+      SET_SLOT(metier, Rf_install("catches"), catches);
       
       SET_VECTOR_ELT(metiers_data, i-1, metier); 
       }
-   metiers = R_do_slot_assign(metiers, install(".Data"), metiers_data);
+   metiers = R_do_slot_assign(metiers, Rf_install(".Data"), metiers_data);
       
-   SET_SLOT(fleet, install("metiers"), metiers);
+   SET_SLOT(fleet, Rf_install("metiers"), metiers);
    
    return fleet;
    }
@@ -660,17 +660,17 @@ SEXP flc::ReturnFleet(int ifleet)
 SEXP flc::ReturnFleets(void)
    {
    SEXP ReturnObject = PROTECT(NEW_OBJECT(MAKE_CLASS("FLFleets")));
-   SEXP flfs         = allocVector(VECSXP,nfleet());
+   SEXP flfs         = Rf_allocVector(VECSXP,nfleet());
    
    int i, j, k;
    for (i=1; i<=nfleet(); i++)
       {
-      SEXP flf = allocVector(VECSXP,nmetier());
+      SEXP flf = Rf_allocVector(VECSXP,nmetier());
       SEXP flms = PROTECT(NEW_OBJECT(MAKE_CLASS("FLMetiers")));
       
       for (j=1; j<=nmetier(); j++)
          {
-         SEXP flm = allocVector(VECSXP,nstock());
+         SEXP flm = Rf_allocVector(VECSXP,nstock());
          SEXP flcs   = PROTECT(NEW_OBJECT(MAKE_CLASS("FLCatches")));
             
          for (k=1; k<=nstock(); k++)
@@ -684,44 +684,44 @@ SEXP flc::ReturnFleets(void)
             REAL(Range)[3] = minyr(   i,j,k);
             REAL(Range)[4] = maxyr(   i,j,k);
        
-            SET_SLOT(flc, install("range"), Range);
+            SET_SLOT(flc, Rf_install("range"), Range);
 
-            SET_SLOT(flc, install("catch"),       catch_.Return(      i,j,k));
-            SET_SLOT(flc, install("catch.n"),     catch_n.Return(     i,j,k));
-            SET_SLOT(flc, install("catch.wt"),    catch_wt.Return(    i,j,k));
-            SET_SLOT(flc, install("catch.q"),     catch_q.Return(     i,j,k));
-            SET_SLOT(flc, install("catch.sel"),   catch_sel.Return(   i,j,k));
-            SET_SLOT(flc, install("landings"),    landings.Return(    i,j,k));
-            SET_SLOT(flc, install("landings.n"),  landings_n.Return(  i,j,k));
-            SET_SLOT(flc, install("landings.wt"), landings_wt.Return( i,j,k));
-            SET_SLOT(flc, install("landings.sel"),landings_sel.Return(i,j,k)); 
-            SET_SLOT(flc, install("discards"),    discards.Return(    i,j,k));
-            SET_SLOT(flc, install("discards.n"),  discards_n.Return(  i,j,k));
-            SET_SLOT(flc, install("discards.wt"), discards_wt.Return( i,j,k));
-            SET_SLOT(flc, install("discards.sel"),discards_sel.Return(i,j,k)); 
-            SET_SLOT(flc, install("price"),       price.Return(       i,j,k));
+            SET_SLOT(flc, Rf_install("catch"),       catch_.Return(      i,j,k));
+            SET_SLOT(flc, Rf_install("catch.n"),     catch_n.Return(     i,j,k));
+            SET_SLOT(flc, Rf_install("catch.wt"),    catch_wt.Return(    i,j,k));
+            SET_SLOT(flc, Rf_install("catch.q"),     catch_q.Return(     i,j,k));
+            SET_SLOT(flc, Rf_install("catch.sel"),   catch_sel.Return(   i,j,k));
+            SET_SLOT(flc, Rf_install("landings"),    landings.Return(    i,j,k));
+            SET_SLOT(flc, Rf_install("landings.n"),  landings_n.Return(  i,j,k));
+            SET_SLOT(flc, Rf_install("landings.wt"), landings_wt.Return( i,j,k));
+            SET_SLOT(flc, Rf_install("landings.sel"),landings_sel.Return(i,j,k)); 
+            SET_SLOT(flc, Rf_install("discards"),    discards.Return(    i,j,k));
+            SET_SLOT(flc, Rf_install("discards.n"),  discards_n.Return(  i,j,k));
+            SET_SLOT(flc, Rf_install("discards.wt"), discards_wt.Return( i,j,k));
+            SET_SLOT(flc, Rf_install("discards.sel"),discards_sel.Return(i,j,k)); 
+            SET_SLOT(flc, Rf_install("price"),       price.Return(       i,j,k));
 
             SET_VECTOR_ELT(flcs, k-1, flc);
    
             UNPROTECT(2);
             }
 
-         SET_SLOT(flm, install("effshare"), effshare.Return(i,j));
-         SET_SLOT(flm, install("vcos"),     vcost.Return(    i,j));
+         SET_SLOT(flm, Rf_install("effshare"), effshare.Return(i,j));
+         SET_SLOT(flm, Rf_install("vcos"),     vcost.Return(    i,j));
          
          SET_VECTOR_ELT(flms, j-1, flm);
          }
       
-      SET_SLOT(flf, install("fcost"),     fcost.Return(    i));
-      SET_SLOT(flf, install("capacity"),  capacity.Return( i));
-      SET_SLOT(flf, install("crewshare"), crewshare.Return(i));
+      SET_SLOT(flf, Rf_install("fcost"),     fcost.Return(    i));
+      SET_SLOT(flf, Rf_install("capacity"),  capacity.Return( i));
+      SET_SLOT(flf, Rf_install("crewshare"), crewshare.Return(i));
 
       SET_VECTOR_ELT(flfs, i-1, flf);
       }
 
-   //SET_SLOT(ReturnObject, install(".Data"), flfs);
+   //SET_SLOT(ReturnObject, Rf_install(".Data"), flfs);
    //ReturnObject = 
-   R_do_slot_assign(ReturnObject, install(".Data"), flfs);
+   R_do_slot_assign(ReturnObject, Rf_install(".Data"), flfs);
              
    UNPROTECT(1);
 
@@ -793,7 +793,7 @@ bool flc::InitBiolFleet(SEXP xBiol, SEXP xFleet, SEXP xDim)
      return false;
    
    SEXP fleet   = PROTECT(VECTOR_ELT(xFleet, 0));
-   SEXP metiers = PROTECT(GET_SLOT(fleet, install("metiers")));
+   SEXP metiers = PROTECT(GET_SLOT(fleet, Rf_install("metiers")));
 
    nstock() = NElemList(xBiol);
    nfleet() = NElemList(xFleet);
@@ -840,12 +840,12 @@ void flc::InitFleet(SEXP x)
    if (!isFLFleet(x)) return;
 
    nfleet() = 1;
-   effort.Init(   nfleet(), GET_SLOT(x, install("effort"))); 
-   capacity.Init( nfleet(), GET_SLOT(x, install("capacity")));   
-   crewshare.Init(nfleet(), GET_SLOT(x, install("crewshare")));
-   fcost.Init(    nfleet(), GET_SLOT(x, install("fcost"))); 
+   effort.Init(   nfleet(), GET_SLOT(x, Rf_install("effort"))); 
+   capacity.Init( nfleet(), GET_SLOT(x, Rf_install("capacity")));   
+   crewshare.Init(nfleet(), GET_SLOT(x, Rf_install("crewshare")));
+   fcost.Init(    nfleet(), GET_SLOT(x, Rf_install("fcost"))); 
 
-   SEXP metiers = PROTECT(GET_SLOT(x, install("metiers")));
+   SEXP metiers = PROTECT(GET_SLOT(x, Rf_install("metiers")));
    int iProtect = 1;
    
    nmetier() = NElemList(metiers);
@@ -876,10 +876,10 @@ void flc::InitFleet(SEXP x)
       SEXP metier  = PROTECT(VECTOR_ELT(metiers, i-1));
       iProtect++;
 
-      effshare.Init(1, i, GET_SLOT(metier, install("effshare"))); 
-      vcost.Init(   1, i, GET_SLOT(metier, install("vcost"))); 
+      effshare.Init(1, i, GET_SLOT(metier, Rf_install("effshare"))); 
+      vcost.Init(   1, i, GET_SLOT(metier, Rf_install("vcost"))); 
          
-      SEXP catches = PROTECT(GET_SLOT(metier, install("catches")));
+      SEXP catches = PROTECT(GET_SLOT(metier, Rf_install("catches")));
       iProtect++;
       if (NElemList(catches) != nstock()) 
          { 
@@ -892,20 +892,20 @@ void flc::InitFleet(SEXP x)
          SEXP _catch = PROTECT(VECTOR_ELT(catches, i-1));
          iProtect++;
 
-         catch_.Init(      1, i, j, GET_SLOT(_catch, install("catch"))); 
-         catch_n.Init(     1, i, j, GET_SLOT(_catch, install("catch.n"))); 
-         catch_wt.Init(    1, i, j, GET_SLOT(_catch, install("catch.wt"))); 
-         catch_sel.Init(   1, i, j, GET_SLOT(_catch, install("catch.sel"))); 
-         catch_q.Init(     1, i, j, GET_SLOT(_catch, install("catch.q"))); 
-         landings.Init(    1, i, j, GET_SLOT(_catch, install("landings"))); 
-         landings_n.Init(  1, i, j, GET_SLOT(_catch, install("landings.n"))); 
-         landings_wt.Init( 1, i, j, GET_SLOT(_catch, install("landings.wt"))); 
-         landings_sel.Init(1, i, j, GET_SLOT(_catch, install("landings.sel"))); 
-         discards.Init(    1, i, j, GET_SLOT(_catch, install("discards"))); 
-         discards_n.Init(  1, i, j, GET_SLOT(_catch, install("discards.n"))); 
-         discards_wt.Init( 1, i, j, GET_SLOT(_catch, install("discards.wt"))); 
-         discards_sel.Init(1, i, j, GET_SLOT(_catch, install("discards.sel"))); 
-         price.Init(       1, i, j, GET_SLOT(_catch, install("price"))); 
+         catch_.Init(      1, i, j, GET_SLOT(_catch, Rf_install("catch"))); 
+         catch_n.Init(     1, i, j, GET_SLOT(_catch, Rf_install("catch.n"))); 
+         catch_wt.Init(    1, i, j, GET_SLOT(_catch, Rf_install("catch.wt"))); 
+         catch_sel.Init(   1, i, j, GET_SLOT(_catch, Rf_install("catch.sel"))); 
+         catch_q.Init(     1, i, j, GET_SLOT(_catch, Rf_install("catch.q"))); 
+         landings.Init(    1, i, j, GET_SLOT(_catch, Rf_install("landings"))); 
+         landings_n.Init(  1, i, j, GET_SLOT(_catch, Rf_install("landings.n"))); 
+         landings_wt.Init( 1, i, j, GET_SLOT(_catch, Rf_install("landings.wt"))); 
+         landings_sel.Init(1, i, j, GET_SLOT(_catch, Rf_install("landings.sel"))); 
+         discards.Init(    1, i, j, GET_SLOT(_catch, Rf_install("discards"))); 
+         discards_n.Init(  1, i, j, GET_SLOT(_catch, Rf_install("discards.n"))); 
+         discards_wt.Init( 1, i, j, GET_SLOT(_catch, Rf_install("discards.wt"))); 
+         discards_sel.Init(1, i, j, GET_SLOT(_catch, Rf_install("discards.sel"))); 
+         price.Init(       1, i, j, GET_SLOT(_catch, Rf_install("price"))); 
          }
       }
 
@@ -948,20 +948,20 @@ void flc::InitBiol(int ifleet, int imetier, int istock, SEXP x)
    if (imetier<1 || imetier>nmetier()) return;
    if (istock   <1 || istock   >nstock())    return;
    
-   fl_minage[ ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[0];
-   fl_maxage[ ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[1];
-   fl_plusgrp[ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[2];
-   fl_minyr[  ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[3];
-   fl_maxyr[  ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, install("range")))[4];
+   fl_minage[ ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[0];
+   fl_maxage[ ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[1];
+   fl_plusgrp[ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[2];
+   fl_minyr[  ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[3];
+   fl_maxyr[  ifleet][imetier][istock] = (int)REAL(GET_SLOT(x, Rf_install("range")))[4];
 
-   //f.Init(       istock, GET_SLOT(x, install("harvest")));
-   n.Init(       istock, GET_SLOT(x, install("n"))); 
-   stock_wt.Init(istock, GET_SLOT(x, install("wt"))); 
-   m.Init(       istock, GET_SLOT(x, install("m"))); 
-   fec.Init(     istock, GET_SLOT(x, install("fec"))); 
-   f_spwn.Init(  istock, GET_SLOT(x, install("spwn")));
-   m_spwn.Init(  istock, GET_SLOT(x, install("spwn")));
-   f.Init(       istock, GET_SLOT(x, install("m"))); 
+   //f.Init(       istock, GET_SLOT(x, Rf_install("harvest")));
+   n.Init(       istock, GET_SLOT(x, Rf_install("n"))); 
+   stock_wt.Init(istock, GET_SLOT(x, Rf_install("wt"))); 
+   m.Init(       istock, GET_SLOT(x, Rf_install("m"))); 
+   fec.Init(     istock, GET_SLOT(x, Rf_install("fec"))); 
+   f_spwn.Init(  istock, GET_SLOT(x, Rf_install("spwn")));
+   m_spwn.Init(  istock, GET_SLOT(x, Rf_install("spwn")));
+   f.Init(       istock, GET_SLOT(x, Rf_install("m"))); 
 
    //set other dims   
    fl_nunits[  ifleet][imetier][istock] = 1;
@@ -1774,7 +1774,7 @@ void flc::InitBiols(SEXP xBiol)
    for (int iStock=1; iStock<=nstock(); iStock++)
       {
       SEXP x      = PROTECT(VECTOR_ELT(xBiol, iStock-1)),
-           xRange = PROTECT(duplicate(GET_SLOT(x,  install("range"))));
+           xRange = PROTECT(Rf_duplicate(GET_SLOT(x,  Rf_install("range"))));
         
       stock_minage[ iStock] = (int)REAL(xRange)[0];
       stock_maxage[ iStock] = (int)REAL(xRange)[1];
@@ -1787,8 +1787,8 @@ void flc::InitBiols(SEXP xBiol)
       if (LENGTH(xRange) >= 7) 
          stock_maxfbar[iStock] = (int)REAL(xRange)[6];
  
-      SEXP xM    = PROTECT(duplicate(GET_SLOT(x,  install("m")))),
-           Quant = PROTECT(duplicate(GET_SLOT(xM, install(".Data")))),
+      SEXP xM    = PROTECT(Rf_duplicate(GET_SLOT(x,  Rf_install("m")))),
+           Quant = PROTECT(Rf_duplicate(GET_SLOT(xM, Rf_install(".Data")))),
            dims  = GET_DIM(Quant);
 
       stock_nunits[  iStock] = INTEGER(dims)[2];
@@ -1797,13 +1797,13 @@ void flc::InitBiols(SEXP xBiol)
       stock_niters[  iStock] = INTEGER(dims)[5]; 
       UNPROTECT(4);
       
-      n.Init(       iStock, GET_SLOT(x, install("n")));
-      m.Init(       iStock, GET_SLOT(x, install("m")));
-      f.Init(       iStock, GET_SLOT(x, install("m")));
-      stock_wt.Init(iStock, GET_SLOT(x, install("wt")));
-      fec.Init(     iStock, GET_SLOT(x, install("fec")));
-      m_spwn.Init(  iStock, GET_SLOT(x, install("spwn")));
-      f_spwn.Init(  iStock, GET_SLOT(x, install("spwn")));
+      n.Init(       iStock, GET_SLOT(x, Rf_install("n")));
+      m.Init(       iStock, GET_SLOT(x, Rf_install("m")));
+      f.Init(       iStock, GET_SLOT(x, Rf_install("m")));
+      stock_wt.Init(iStock, GET_SLOT(x, Rf_install("wt")));
+      fec.Init(     iStock, GET_SLOT(x, Rf_install("fec")));
+      m_spwn.Init(  iStock, GET_SLOT(x, Rf_install("spwn")));
+      f_spwn.Init(  iStock, GET_SLOT(x, Rf_install("spwn")));
       }
    }
 
@@ -1872,39 +1872,39 @@ void flc::InitFleets(SEXP xFleet)
    for (int iFleet=1; iFleet<=nfleet(); iFleet++)
       {
       SEXP fleet   = PROTECT(VECTOR_ELT(xFleet, iFleet-1)),
-           metiers = PROTECT(duplicate(GET_SLOT(fleet, install("metiers"))));
+           metiers = PROTECT(Rf_duplicate(GET_SLOT(fleet, Rf_install("metiers"))));
          
-      effort.Init(   iFleet, GET_SLOT(fleet, install("effort")));
-      fcost.Init(    iFleet, GET_SLOT(fleet, install("fcost")));
-      capacity.Init( iFleet, GET_SLOT(fleet, install("capacity")));
-      crewshare.Init(iFleet, GET_SLOT(fleet, install("crewshare")));
+      effort.Init(   iFleet, GET_SLOT(fleet, Rf_install("effort")));
+      fcost.Init(    iFleet, GET_SLOT(fleet, Rf_install("fcost")));
+      capacity.Init( iFleet, GET_SLOT(fleet, Rf_install("capacity")));
+      crewshare.Init(iFleet, GET_SLOT(fleet, Rf_install("crewshare")));
      
       for (int iMetier=1; iMetier<=nmetier(); iMetier++)
          {
          SEXP metier  = PROTECT(VECTOR_ELT(metiers, iMetier-1)),
-              catches = PROTECT(duplicate(GET_SLOT(metier, install("catches"))));
+              catches = PROTECT(Rf_duplicate(GET_SLOT(metier, Rf_install("catches"))));
       
-         effshare.Init(iFleet, iMetier, GET_SLOT(metier, install("effshare")));
-         vcost.Init(   iFleet, iMetier, GET_SLOT(metier, install("vcost")));
+         effshare.Init(iFleet, iMetier, GET_SLOT(metier, Rf_install("effshare")));
+         vcost.Init(   iFleet, iMetier, GET_SLOT(metier, Rf_install("vcost")));
 
          for (int iStock=1; iStock<=nstock(); iStock++)
             {	
             SEXP _catch = PROTECT(VECTOR_ELT(catches, iStock-1));
 
-            catch_q.Init(     iFleet, iMetier, iStock, GET_SLOT(_catch, install("catch.q")));  
-            catch_.Init(      iFleet, iMetier, iStock, GET_SLOT(_catch, install("landings"))); 
-            catch_n.Init(     iFleet, iMetier, iStock, GET_SLOT(_catch, install("landings.n")));  
-            catch_wt.Init(    iFleet, iMetier, iStock, GET_SLOT(_catch, install("landings.wt")));  
-            catch_sel.Init(   iFleet, iMetier, iStock, GET_SLOT(_catch, install("landings.sel")));  
-            landings.Init(    iFleet, iMetier, iStock, GET_SLOT(_catch, install("landings")));  
-            landings_n.Init(  iFleet, iMetier, iStock, GET_SLOT(_catch, install("landings.n")));  
-            landings_wt.Init( iFleet, iMetier, iStock, GET_SLOT(_catch, install("landings.wt")));  
-            landings_sel.Init(iFleet, iMetier, iStock, GET_SLOT(_catch, install("landings.sel")));  
-            discards.Init(    iFleet, iMetier, iStock, GET_SLOT(_catch, install("discards")));  
-            discards_n.Init(  iFleet, iMetier, iStock, GET_SLOT(_catch, install("discards.n")));  
-            discards_wt.Init( iFleet, iMetier, iStock, GET_SLOT(_catch, install("discards.wt")));  
-            discards_sel.Init(iFleet, iMetier, iStock, GET_SLOT(_catch, install("discards.sel")));  
-            price.Init(       iFleet, iMetier, iStock, GET_SLOT(_catch, install("price"))); 
+            catch_q.Init(     iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("catch.q")));  
+            catch_.Init(      iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("landings"))); 
+            catch_n.Init(     iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("landings.n")));  
+            catch_wt.Init(    iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("landings.wt")));  
+            catch_sel.Init(   iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("landings.sel")));  
+            landings.Init(    iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("landings")));  
+            landings_n.Init(  iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("landings.n")));  
+            landings_wt.Init( iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("landings.wt")));  
+            landings_sel.Init(iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("landings.sel")));  
+            discards.Init(    iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("discards")));  
+            discards_n.Init(  iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("discards.n")));  
+            discards_wt.Init( iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("discards.wt")));  
+            discards_sel.Init(iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("discards.sel")));  
+            price.Init(       iFleet, iMetier, iStock, GET_SLOT(_catch, Rf_install("price"))); 
 
             for(int iStock=1; iStock<=nstock(); iStock++)
               for (int iIter = 1; iIter<=niters(iStock); iIter++)
@@ -1949,7 +1949,7 @@ bool flc::InitBiolsFleets(SEXP xBiols, SEXP xFleets, SEXP xDim)
 //   nmetier()= NElemList(metiers);
  
    SEXP fleet   = PROTECT(VECTOR_ELT(xFleets, 0));
-   SEXP metiers = PROTECT(GET_SLOT(fleet, install("metiers")));
+   SEXP metiers = PROTECT(GET_SLOT(fleet, Rf_install("metiers")));
 
    if (nfleet() < 1 || nmetier() < 1 || nstock() < 1)
       {

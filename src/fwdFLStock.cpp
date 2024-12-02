@@ -589,7 +589,7 @@ SEXP fwdStk::run(SEXP xTrgt, SEXP xAry)
 
     // check target object
     REAL(Err)[0]=3.0;
-    if (!isMatrix(xTrgt) || !isNumeric(xTrgt)) {
+    if (!Rf_isMatrix(xTrgt) || !Rf_isNumeric(xTrgt)) {
        ;
        //UNPROTECT(1);
        //return Err;
@@ -597,7 +597,7 @@ SEXP fwdStk::run(SEXP xTrgt, SEXP xAry)
 
     // check target min/max/value object
     REAL(Err)[0]=4.0;
-    if (!isArray(xAry) || !isNumeric(xAry)) {
+    if (!Rf_isArray(xAry) || !Rf_isNumeric(xAry)) {
        ;
        //UNPROTECT(1);
        //return Err;
